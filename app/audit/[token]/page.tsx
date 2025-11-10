@@ -84,7 +84,10 @@ export default function AuditFormPage() {
 
   // Calculate progress
   const allValues = watch();
-  const answeredCount = Object.keys(allValues).filter((key) => allValues[key as keyof FormData]).length;
+  const answeredCount = relevantQuestions.filter((q) => {
+    const value = allValues[q.id as keyof FormData];
+    return value === 1 || value === 5 || value === 10;
+  }).length;
   const totalQuestions = relevantQuestions.length;
   const progress = totalQuestions > 0 ? (answeredCount / totalQuestions) * 100 : 0;
 
