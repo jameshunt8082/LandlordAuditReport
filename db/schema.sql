@@ -24,11 +24,7 @@ CREATE TABLE IF NOT EXISTS audits (
   conducted_by VARCHAR(255) NOT NULL,
   
   created_at TIMESTAMP DEFAULT NOW(),
-  submitted_at TIMESTAMP,
-  
-  INDEX idx_auditor_id (auditor_id),
-  INDEX idx_token (token),
-  INDEX idx_status (status)
+  submitted_at TIMESTAMP
 );
 
 -- Form responses table
@@ -38,8 +34,6 @@ CREATE TABLE IF NOT EXISTS form_responses (
   question_id VARCHAR(50) NOT NULL,
   answer_value INTEGER NOT NULL CHECK (answer_value IN (1, 5, 10)),
   created_at TIMESTAMP DEFAULT NOW(),
-  
-  INDEX idx_audit_id (audit_id),
   UNIQUE (audit_id, question_id)
 );
 
@@ -50,8 +44,6 @@ CREATE TABLE IF NOT EXISTS scores (
   category VARCHAR(100) NOT NULL,
   score DECIMAL(4, 2) NOT NULL CHECK (score >= 1.0 AND score <= 10.0),
   created_at TIMESTAMP DEFAULT NOW(),
-  
-  INDEX idx_audit_id (audit_id),
   UNIQUE (audit_id, category)
 );
 
@@ -62,10 +54,7 @@ CREATE TABLE IF NOT EXISTS notes (
   auditor_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   question_id VARCHAR(50),
   content TEXT NOT NULL,
-  created_at TIMESTAMP DEFAULT NOW(),
-  
-  INDEX idx_audit_id (audit_id),
-  INDEX idx_auditor_id (auditor_id)
+  created_at TIMESTAMP DEFAULT NOW()
 );
 
 -- Create indexes for better query performance
