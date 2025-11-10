@@ -9,7 +9,10 @@
     "lint": "eslint",
     "db:migrate": "tsx db/migrate.ts",
     "db:migrate:questions": "tsx db/migrate-questions.ts",
-    "db:seed:questions": "tsx db/seed-questions.ts"
+    "db:seed:questions": "tsx db/seed-questions.ts",
+    "db:cleanup:duplicates": "tsx db/cleanup-duplicates.ts",
+    "db:add:constraints": "tsx db/add-constraints.ts",
+    "db:investigate": "tsx db/investigate-duplicates.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

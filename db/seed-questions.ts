@@ -49,7 +49,7 @@ async function seedQuestions() {
 
         const templateId = templateResult.rows[0].id;
 
-        // Insert answer options
+        // Insert answer options (idempotent with unique constraint)
         for (let i = 0; i < question.options.length; i++) {
           const option = question.options[i];
           await sql`
@@ -63,10 +63,14 @@ async function seedQuestions() {
               ${templateId},
               ${option.label},
               ${option.value},
-              ${i},
+              ${i + 1},
               FALSE
             )
-            ON CONFLICT DO NOTHING
+            ON CONFLICT (question_template_id, option_text) 
+            DO UPDATE SET 
+              score_value = EXCLUDED.score_value,
+              option_order = EXCLUDED.option_order,
+              updated_at = NOW()
           `;
         }
 
