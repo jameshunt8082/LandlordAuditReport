@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -74,7 +74,7 @@ export default function AuditFormPage() {
   type FormData = z.infer<typeof formSchema>;
 
   const {
-    register,
+    control,
     handleSubmit,
     formState: { errors },
     watch,
@@ -82,14 +82,19 @@ export default function AuditFormPage() {
     resolver: zodResolver(formSchema),
   });
 
-  // Calculate progress
+  // Calculate progress (optimized with useMemo)
   const allValues = watch();
-  const answeredCount = relevantQuestions.filter((q) => {
-    const value = allValues[q.id as keyof FormData];
-    return value === 1 || value === 5 || value === 10;
-  }).length;
+  const { answeredCount, progress } = useMemo(() => {
+    const answered = relevantQuestions.filter((q) => {
+      const value = allValues[q.id as keyof FormData];
+      return value === 1 || value === 5 || value === 10;
+    }).length;
+    const total = relevantQuestions.length;
+    const prog = total > 0 ? (answered / total) * 100 : 0;
+    return { answeredCount: answered, progress: prog };
+  }, [allValues, relevantQuestions]);
+  
   const totalQuestions = relevantQuestions.length;
-  const progress = totalQuestions > 0 ? (answeredCount / totalQuestions) * 100 : 0;
 
   // Submit handler
   const onSubmit = async (data: FormData) => {
@@ -282,25 +287,31 @@ export default function AuditFormPage() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <RadioGroup>
-                    {question.options.map((option) => (
-                      <div key={option.value} className="flex items-start space-x-2 mb-3">
-                        <input
-                          type="radio"
-                          id={`${question.id}-${option.value}`}
-                          value={option.value}
-                          {...register(question.id as any)}
-                          className="mt-1"
-                        />
-                        <Label
-                          htmlFor={`${question.id}-${option.value}`}
-                          className="font-normal cursor-pointer leading-relaxed"
-                        >
-                          {option.label}
-                        </Label>
-                      </div>
-                    ))}
-                  </RadioGroup>
+                  <Controller
+                    name={question.id as any}
+                    control={control}
+                    render={({ field }) => (
+                      <RadioGroup
+                        onValueChange={(value) => field.onChange(parseInt(value, 10))}
+                        value={field.value?.toString()}
+                      >
+                        {question.options.map((option) => (
+                          <div key={option.value} className="flex items-center space-x-2 mb-3">
+                            <RadioGroupItem
+                              value={option.value.toString()}
+                              id={`${question.id}-${option.value}`}
+                            />
+                            <Label
+                              htmlFor={`${question.id}-${option.value}`}
+                              className="font-normal cursor-pointer leading-relaxed flex-1"
+                            >
+                              {option.label}
+                            </Label>
+                          </div>
+                        ))}
+                      </RadioGroup>
+                    )}
+                  />
                   {errors[question.id as keyof typeof errors] && (
                     <p className="text-sm text-red-600 mt-2">
                       {errors[question.id as keyof typeof errors]?.message as string}
