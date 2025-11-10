@@ -326,13 +326,16 @@ export default function AuditFormPage() {
         <Card>
           <CardContent className="pt-6">
             <div className="space-y-2">
-              <div className="flex justify-between text-sm">
+              <div className="flex justify-between text-sm" aria-live="polite" aria-atomic="true">
                 <span>
                   Progress: {answeredCount} of {totalQuestions} questions answered
                 </span>
                 <span>{Math.round(progress)}%</span>
               </div>
-              <Progress value={progress} />
+              <Progress 
+                value={progress} 
+                aria-label={`Form completion progress: ${Math.round(progress)}%`}
+              />
             </div>
           </CardContent>
         </Card>
@@ -400,12 +403,15 @@ export default function AuditFormPage() {
                       <RadioGroup
                         onValueChange={(value) => field.onChange(parseInt(value, 10))}
                         value={field.value?.toString()}
+                        aria-label={question.text}
+                        aria-required="true"
                       >
                         {question.options.map((option) => (
                           <div key={option.value} className="flex items-center space-x-2 mb-3">
                             <RadioGroupItem
                               value={option.value.toString()}
                               id={`${question.id}-${option.value}`}
+                              aria-label={`Score ${option.value}: ${option.label}`}
                             />
                             <Label
                               htmlFor={`${question.id}-${option.value}`}
@@ -419,7 +425,7 @@ export default function AuditFormPage() {
                     )}
                   />
                   {errors[question.id as keyof typeof errors] && (
-                    <p className="text-sm text-red-600 mt-2">
+                    <p className="text-sm text-red-600 mt-2" role="alert" aria-live="polite">
                       {errors[question.id as keyof typeof errors]?.message as string}
                     </p>
                   )}
