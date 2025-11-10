@@ -186,11 +186,12 @@ export default function EditQuestionPage() {
         });
 
         // Update field array
-        replace(mappedOptions.length > 0 ? mappedOptions : [
+        const fieldsToSet = mappedOptions.length > 0 ? mappedOptions : [
           { option_text: "", score_value: 10, is_example: false },
           { option_text: "", score_value: 1, is_example: false },
-        ]);
-
+        ];
+        
+        replace(fieldsToSet);
         setLoading(false);
       } catch (error) {
         console.error("Failed to fetch question:", error);

@@ -42,38 +42,52 @@ export async function GET(
 
     const { id } = await params;
 
-    const result = await sql`
-      SELECT 
-        qt.*,
-        COALESCE(
-          json_agg(
-            jsonb_build_object(
-              'id', qao.id,
-              'option_text', qao.option_text,
-              'score_value', qao.score_value,
-              'option_order', qao.option_order,
-              'is_example', qao.is_example
-            ) ORDER BY qao.option_order
-          ) FILTER (WHERE qao.id IS NOT NULL),
-          '[]'
-        ) as answer_options,
-        COALESCE(
-          json_agg(
-            DISTINCT jsonb_build_object(
-              'id', qse.id,
-              'score_level', qse.score_level,
-              'reason_text', qse.reason_text,
-              'report_action', qse.report_action
-            )
-          ) FILTER (WHERE qse.id IS NOT NULL),
-          '[]'
-        ) as score_examples
-      FROM question_templates qt
-      LEFT JOIN question_answer_options qao ON qt.id = qao.question_template_id
-      LEFT JOIN question_score_examples qse ON qt.id = qse.question_template_id
-      WHERE qt.id = ${id}
-      GROUP BY qt.id
+    // Fetch question template first
+    const templateResult = await sql`
+      SELECT * FROM question_templates WHERE id = ${id}
     `;
+
+    if (templateResult.rows.length === 0) {
+      return NextResponse.json(
+        { error: "Question not found" },
+        { status: 404 }
+      );
+    }
+
+    const template = templateResult.rows[0];
+
+    // Fetch answer options separately to avoid cartesian product
+    const optionsResult = await sql`
+      SELECT 
+        id,
+        option_text,
+        score_value,
+        option_order,
+        is_example
+      FROM question_answer_options
+      WHERE question_template_id = ${id}
+      ORDER BY option_order
+    `;
+
+    // Fetch score examples separately
+    const examplesResult = await sql`
+      SELECT 
+        id,
+        score_level,
+        reason_text,
+        report_action
+      FROM question_score_examples
+      WHERE question_template_id = ${id}
+      ORDER BY score_level
+    `;
+
+    const result = {
+      rows: [{
+        ...template,
+        answer_options: optionsResult.rows,
+        score_examples: examplesResult.rows,
+      }]
+    };
 
     if (result.rows.length === 0) {
       return NextResponse.json(
