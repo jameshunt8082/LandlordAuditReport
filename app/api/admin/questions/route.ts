@@ -41,55 +41,85 @@ export async function GET(request: Request) {
     const tier = searchParams.get("tier");
     const activeOnly = searchParams.get("active") !== "false";
 
-    let query = `
-      SELECT 
-        qt.*,
-        json_agg(DISTINCT jsonb_build_object(
-          'id', qao.id,
-          'option_text', qao.option_text,
-          'score_value', qao.score_value,
-          'option_order', qao.option_order,
-          'is_example', qao.is_example
-        ) ORDER BY qao.option_order) FILTER (WHERE qao.id IS NOT NULL) as answer_options,
-        json_agg(DISTINCT jsonb_build_object(
-          'score_level', qse.score_level,
-          'reason_text', qse.reason_text,
-          'report_action', qse.report_action
-        )) FILTER (WHERE qse.id IS NOT NULL) as score_examples
-      FROM question_templates qt
-      LEFT JOIN question_answer_options qao ON qt.id = qao.question_template_id
-      LEFT JOIN question_score_examples qse ON qt.id = qse.question_template_id
-      WHERE 1=1
-    `;
-
-    const params: any[] = [];
-    let paramCount = 1;
-
-    if (activeOnly) {
-      query += ` AND qt.is_active = TRUE`;
+    // Single optimized query with JOINs - 51 queries reduced to 1
+    let result;
+    
+    if (category && category !== "all") {
+      result = await sql`
+        SELECT 
+          qt.*,
+          COALESCE(
+            json_agg(
+              jsonb_build_object(
+                'id', qao.id,
+                'option_text', qao.option_text,
+                'score_value', qao.score_value,
+                'option_order', qao.option_order,
+                'is_example', qao.is_example
+              ) ORDER BY qao.option_order
+            ) FILTER (WHERE qao.id IS NOT NULL),
+            '[]'
+          ) as answer_options,
+          COALESCE(
+            json_agg(
+              DISTINCT jsonb_build_object(
+                'id', qse.id,
+                'score_level', qse.score_level,
+                'reason_text', qse.reason_text,
+                'report_action', qse.report_action
+              )
+            ) FILTER (WHERE qse.id IS NOT NULL),
+            '[]'
+          ) as score_examples
+        FROM question_templates qt
+        LEFT JOIN question_answer_options qao ON qt.id = qao.question_template_id
+        LEFT JOIN question_score_examples qse ON qt.id = qse.question_template_id
+        WHERE qt.is_active = TRUE
+          AND qt.category = ${category}
+        GROUP BY qt.id
+        ORDER BY qt.category, qt.question_number
+      `;
+    } else {
+      result = await sql`
+        SELECT 
+          qt.*,
+          COALESCE(
+            json_agg(
+              jsonb_build_object(
+                'id', qao.id,
+                'option_text', qao.option_text,
+                'score_value', qao.score_value,
+                'option_order', qao.option_order,
+                'is_example', qao.is_example
+              ) ORDER BY qao.option_order
+            ) FILTER (WHERE qao.id IS NOT NULL),
+            '[]'
+          ) as answer_options,
+          COALESCE(
+            json_agg(
+              DISTINCT jsonb_build_object(
+                'id', qse.id,
+                'score_level', qse.score_level,
+                'reason_text', qse.reason_text,
+                'report_action', qse.report_action
+              )
+            ) FILTER (WHERE qse.id IS NOT NULL),
+            '[]'
+          ) as score_examples
+        FROM question_templates qt
+        LEFT JOIN question_answer_options qao ON qt.id = qao.question_template_id
+        LEFT JOIN question_score_examples qse ON qt.id = qse.question_template_id
+        WHERE qt.is_active = TRUE
+        GROUP BY qt.id
+        ORDER BY qt.category, qt.question_number
+      `;
     }
-
-    if (category) {
-      query += ` AND qt.category = $${paramCount}`;
-      params.push(category);
-      paramCount++;
-    }
-
-    if (tier) {
-      query += ` AND qt.applicable_tiers @> $${paramCount}::jsonb`;
-      params.push(JSON.stringify([tier]));
-      paramCount++;
-    }
-
-    query += ` GROUP BY qt.id ORDER BY qt.category, qt.question_number`;
-
-    const result = await sql.query(query, params);
 
     return NextResponse.json({
       questions: result.rows,
       total: result.rows.length,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Get questions error:", error);
     return NextResponse.json(
       { error: "Internal server error" },

@@ -18,7 +18,7 @@ export default function QuestionsPage() {
     try {
       const url = categoryFilter === "all" 
         ? "/api/admin/questions"
-        : `/api/admin/questions?category=${categoryFilter}`;
+        : `/api/admin/questions?category=${encodeURIComponent(categoryFilter)}`;
       
       const response = await fetch(url);
       if (response.ok) {
@@ -42,7 +42,12 @@ export default function QuestionsPage() {
     q.sub_category.toLowerCase().includes(filter.toLowerCase())
   );
 
-  const categories = ["all", "Documentation", "Landlord-Tenant Communication", "Evidence Gathering Systems and Procedures"];
+  const categories = [
+    { value: "all", label: "All Categories" },
+    { value: "Documentation", label: "Documentation" },
+    { value: "Landlord-Tenant Communication", label: "Landlord-Tenant" },
+    { value: "Evidence Gathering Systems and Procedures", label: "Evidence" }
+  ];
 
   if (loading) {
     return (
@@ -81,12 +86,12 @@ export default function QuestionsPage() {
             <div className="flex gap-2 flex-wrap">
               {categories.map((cat) => (
                 <Button
-                  key={cat}
+                  key={cat.value}
                   size="sm"
-                  variant={categoryFilter === cat ? "default" : "outline"}
-                  onClick={() => setCategoryFilter(cat)}
+                  variant={categoryFilter === cat.value ? "default" : "outline"}
+                  onClick={() => setCategoryFilter(cat.value)}
                 >
-                  {cat === "all" ? "All Categories" : cat.split(" ")[0]}
+                  {cat.label}
                 </Button>
               ))}
             </div>
@@ -191,7 +196,9 @@ export default function QuestionsPage() {
                       </span>
                       <span>•</span>
                       <span>
-                        Tiers: {JSON.parse(question.applicable_tiers as any).join(", ").replace(/tier_/g, '')}
+                        Tiers: {Array.isArray(question.applicable_tiers) 
+                          ? question.applicable_tiers.join(", ").replace(/tier_/g, '')
+                          : String(question.applicable_tiers).replace(/[{}]/g, '').replace(/tier_/g, '')}
                       </span>
                     </div>
                   </div>

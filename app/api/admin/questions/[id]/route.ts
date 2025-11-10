@@ -8,11 +8,25 @@ const updateQuestionSchema = z.object({
   sub_category: z.string().optional(),
   question_text: z.string().min(10).optional(),
   question_type: z.enum(["yes_no", "multiple_choice"]).optional(),
-  applicable_tiers: z.array(z.enum(["tier_0", "tier_1", "tier_2", "tier_3", "tier_4"])).optional(),
+  applicable_tiers: z.array(z.string()).optional(),
   weight: z.number().min(0.5).max(2.0).optional(),
   is_critical: z.boolean().optional(),
   motivation_learning_point: z.string().optional(),
   is_active: z.boolean().optional(),
+  answer_options: z.array(
+    z.object({
+      option_text: z.string(),
+      score_value: z.number().min(1).max(10),
+      is_example: z.boolean().optional(),
+    })
+  ).optional(),
+  score_examples: z.array(
+    z.object({
+      score_level: z.enum(["low", "medium", "high"]),
+      reason_text: z.string(),
+      report_action: z.string().optional(),
+    })
+  ).optional(),
 });
 
 // GET - Get single question with options
@@ -147,9 +161,85 @@ export async function PATCH(
       );
     }
 
+    // Update answer_options if provided
+    if (body.answer_options && Array.isArray(body.answer_options)) {
+      // Delete existing options
+      await sql`DELETE FROM question_answer_options WHERE question_template_id = ${id}`;
+      
+      // Insert new options
+      for (let i = 0; i < body.answer_options.length; i++) {
+        const option = body.answer_options[i];
+        await sql`
+          INSERT INTO question_answer_options (
+            question_template_id, option_text, score_value, option_order, is_example
+          ) VALUES (
+            ${id}, 
+            ${option.option_text}, 
+            ${option.score_value}, 
+            ${i + 1}, 
+            ${option.is_example || false}
+          )
+        `;
+      }
+    }
+
+    // Update score_examples if provided
+    if (body.score_examples && Array.isArray(body.score_examples)) {
+      // Delete existing examples
+      await sql`DELETE FROM question_score_examples WHERE question_template_id = ${id}`;
+      
+      // Insert new examples
+      for (const example of body.score_examples) {
+        await sql`
+          INSERT INTO question_score_examples (
+            question_template_id, score_level, reason_text, report_action
+          ) VALUES (
+            ${id}, 
+            ${example.score_level}, 
+            ${example.reason_text}, 
+            ${example.report_action || ''}
+          )
+        `;
+      }
+    }
+
+    // Fetch complete updated question with relations
+    const updatedQuestion = await sql`
+      SELECT 
+        qt.*,
+        COALESCE(
+          json_agg(
+            jsonb_build_object(
+              'id', qao.id,
+              'option_text', qao.option_text,
+              'score_value', qao.score_value,
+              'option_order', qao.option_order,
+              'is_example', qao.is_example
+            ) ORDER BY qao.option_order
+          ) FILTER (WHERE qao.id IS NOT NULL),
+          '[]'
+        ) as answer_options,
+        COALESCE(
+          json_agg(
+            DISTINCT jsonb_build_object(
+              'id', qse.id,
+              'score_level', qse.score_level,
+              'reason_text', qse.reason_text,
+              'report_action', qse.report_action
+            )
+          ) FILTER (WHERE qse.id IS NOT NULL),
+          '[]'
+        ) as score_examples
+      FROM question_templates qt
+      LEFT JOIN question_answer_options qao ON qt.id = qao.question_template_id
+      LEFT JOIN question_score_examples qse ON qt.id = qse.question_template_id
+      WHERE qt.id = ${id}
+      GROUP BY qt.id
+    `;
+
     return NextResponse.json({
       message: "Question updated successfully",
-      question: result.rows[0],
+      question: updatedQuestion.rows[0],
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
