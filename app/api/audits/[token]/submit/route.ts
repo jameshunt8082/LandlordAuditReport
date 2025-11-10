@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { sql } from "@vercel/postgres";
 import { z } from "zod";
+import { getQuestionsByTier } from "@/lib/questions";
 
 const submitSchema = z.object({
   responses: z.array(
@@ -23,7 +24,7 @@ export async function POST(
 
     // Get audit
     const auditResult = await sql`
-      SELECT id, status FROM audits WHERE token = ${token}
+      SELECT id, status, risk_audit_tier FROM audits WHERE token = ${token}
     `;
 
     if (auditResult.rows.length === 0) {
@@ -38,6 +39,40 @@ export async function POST(
     if (audit.status !== "pending") {
       return NextResponse.json(
         { error: "This audit has already been submitted" },
+        { status: 400 }
+      );
+    }
+
+    // Validate all required questions are answered for this tier
+    const requiredQuestions = getQuestionsByTier(audit.risk_audit_tier);
+    const requiredQuestionIds = requiredQuestions.map((q) => q.id);
+    const submittedQuestionIds = responses.map((r) => r.question_id);
+
+    // Check if all required questions are answered
+    const missingQuestions = requiredQuestionIds.filter(
+      (id) => !submittedQuestionIds.includes(id)
+    );
+
+    if (missingQuestions.length > 0) {
+      return NextResponse.json(
+        { 
+          error: `Missing responses for ${missingQuestions.length} question(s): ${missingQuestions.join(", ")}`,
+          missingQuestions,
+        },
+        { status: 400 }
+      );
+    }
+
+    // Validate no extra questions submitted
+    const extraQuestions = submittedQuestionIds.filter(
+      (id) => !requiredQuestionIds.includes(id)
+    );
+
+    if (extraQuestions.length > 0) {
+      return NextResponse.json(
+        { 
+          error: `Invalid question IDs submitted: ${extraQuestions.join(", ")}`,
+        },
         { status: 400 }
       );
     }

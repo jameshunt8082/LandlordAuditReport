@@ -148,12 +148,35 @@ export default function AuditFormPage() {
     return progress;
   }, [allValues, groupedQuestions]);
 
-  // Submit handler
+  // Submit handler with enhanced validation
   const onSubmit = async (data: FormData) => {
     setError("");
     setSubmitting(true);
 
     try {
+      // Client-side validation: ensure all questions answered
+      const unansweredQuestions = relevantQuestions.filter((q) => {
+        const value = data[q.id as keyof FormData];
+        return value !== 1 && value !== 5 && value !== 10;
+      });
+
+      if (unansweredQuestions.length > 0) {
+        setError(
+          `Please answer all questions. ${unansweredQuestions.length} question(s) remaining: ` +
+          unansweredQuestions.map((q) => `Q${q.id}`).join(", ")
+        );
+        
+        // Scroll to first unanswered question
+        const firstUnanswered = unansweredQuestions[0];
+        const element = document.getElementById(`question-${firstUnanswered.id}`);
+        if (element) {
+          element.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+        
+        setSubmitting(false);
+        return;
+      }
+
       const responses = Object.entries(data).map(([question_id, answer_value]) => ({
         question_id,
         answer_value: answer_value as 1 | 5 | 10,
@@ -169,6 +192,9 @@ export default function AuditFormPage() {
 
       if (!response.ok) {
         setError(result.error || "Failed to submit audit");
+        
+        // Scroll to top to show error message
+        window.scrollTo({ top: 0, behavior: "smooth" });
         return;
       }
 
@@ -180,6 +206,7 @@ export default function AuditFormPage() {
       setSubmitted(true);
     } catch (error) {
       setError("An error occurred while submitting the audit");
+      window.scrollTo({ top: 0, behavior: "smooth" });
     } finally {
       setSubmitting(false);
     }
@@ -240,6 +267,14 @@ export default function AuditFormPage() {
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4">
       <div className="max-w-3xl mx-auto space-y-6">
+        {/* Global Error Message */}
+        {error && (
+          <div className="bg-red-50 border-2 border-red-200 text-red-800 p-4 rounded-lg">
+            <p className="font-semibold">⚠️ Error</p>
+            <p className="text-sm mt-1">{error}</p>
+          </div>
+        )}
+
         {/* Header */}
         <Card>
           <CardHeader>
@@ -344,7 +379,7 @@ export default function AuditFormPage() {
             </h2>
 
             {currentQuestions.map((question, index) => (
-              <Card key={question.id}>
+              <Card key={question.id} id={`question-${question.id}`}>
                 <CardHeader>
                   <div className="flex items-start justify-between gap-4">
                     <CardTitle className="text-base font-medium leading-relaxed">
@@ -420,15 +455,10 @@ export default function AuditFormPage() {
                 )}
               </div>
 
-              {error && (
-                <div className="bg-red-50 text-red-600 p-3 rounded mt-4 text-sm">
-                  {error}
-                </div>
-              )}
-
               {progress < 100 && currentCategory === categories.length - 1 && (
                 <div className="bg-yellow-50 text-yellow-800 p-3 rounded mt-4 text-sm">
-                  Please answer all questions before submitting.
+                  ⚠️ Please answer all {totalQuestions} questions before submitting. 
+                  ({totalQuestions - answeredCount} remaining)
                 </div>
               )}
             </CardContent>
