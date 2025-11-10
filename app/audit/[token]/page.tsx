@@ -400,28 +400,30 @@ export default function AuditFormPage() {
                     name={question.id as any}
                     control={control}
                     render={({ field }) => (
-                      <RadioGroup
-                        onValueChange={(value) => field.onChange(parseInt(value, 10))}
-                        value={field.value?.toString()}
-                        aria-label={question.text}
-                        aria-required="true"
-                      >
+                      <div role="radiogroup" aria-label={question.text} aria-required="true">
                         {question.options.map((option) => (
-                          <div key={option.value} className="flex items-center space-x-2 mb-3">
-                            <RadioGroupItem
-                              value={option.value.toString()}
+                          <div key={option.value} className="flex items-start space-x-3 mb-4">
+                            <input
+                              type="radio"
                               id={`${question.id}-${option.value}`}
+                              value={option.value}
+                              checked={field.value === option.value}
+                              onChange={(e) => {
+                                const numValue = parseInt(e.target.value, 10);
+                                field.onChange(numValue);
+                              }}
+                              className="mt-1 h-4 w-4 cursor-pointer"
                               aria-label={`Score ${option.value}: ${option.label}`}
                             />
                             <Label
                               htmlFor={`${question.id}-${option.value}`}
-                              className="font-normal cursor-pointer leading-relaxed flex-1"
+                              className="font-normal cursor-pointer leading-relaxed flex-1 text-sm"
                             >
                               {option.label}
                             </Label>
                           </div>
                         ))}
-                      </RadioGroup>
+                      </div>
                     )}
                   />
                   {errors[question.id as keyof typeof errors] && (
