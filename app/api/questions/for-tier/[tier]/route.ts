@@ -8,6 +8,7 @@ export async function GET(
 ) {
   try {
     const { tier } = await params;
+    console.log('\n🎯 GET /api/questions/for-tier/' + tier);
 
     // Validate tier
     const validTiers = ["tier_0", "tier_1", "tier_2", "tier_3", "tier_4"];
@@ -19,6 +20,7 @@ export async function GET(
     }
 
     // Get questions with answer options for this tier
+    console.log('📋 Fetching questions from DB...');
     const result = await sql`
       SELECT 
         qt.id,
@@ -34,15 +36,22 @@ export async function GET(
             'value', qao.score_value,
             'label', qao.option_text
           ) ORDER BY qao.option_order
-        ) as options
+        ) FILTER (WHERE qao.id IS NOT NULL AND qao.is_example = FALSE) as options
       FROM question_templates qt
       LEFT JOIN question_answer_options qao ON qt.id = qao.question_template_id
       WHERE qt.is_active = TRUE
         AND qt.applicable_tiers @> ${JSON.stringify([tier])}::jsonb
-        AND qao.is_example = FALSE
       GROUP BY qt.id
       ORDER BY qt.category, qt.question_number
     `;
+
+    console.log('   Found', result.rows.length, 'questions');
+    
+    // Log each question with its option count
+    result.rows.forEach(row => {
+      const optionCount = row.options ? row.options.length : 0;
+      console.log(`   Q${row.question_number}: ${optionCount} options ${optionCount === 0 ? '⚠️  NO OPTIONS!' : ''}`);
+    });
 
     // Transform to match the Question interface from lib/questions.ts
     const questions = result.rows.map((row) => ({
@@ -56,6 +65,7 @@ export async function GET(
       options: row.options || [],
     }));
 
+    console.log('✅ Returning', questions.length, 'questions\n');
     return NextResponse.json({ questions });
   } catch (error) {
     console.error("Get questions for tier error:", error);

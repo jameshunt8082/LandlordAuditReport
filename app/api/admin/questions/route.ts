@@ -142,24 +142,39 @@ export async function GET(request: Request) {
 // POST - Create new question
 export async function POST(request: Request) {
   try {
+    console.log('\n🔵 POST /api/admin/questions - START');
+    
     const session = await auth();
     if (!session?.user?.id) {
+      console.log('❌ Unauthorized - no session');
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    console.log('✅ Session validated:', session.user.id);
 
     const body = await request.json();
+    console.log('📦 Request body:', JSON.stringify(body, null, 2));
+    
+    console.log('🔍 Validating with Zod schema...');
     const data = createQuestionSchema.parse(body);
+    console.log('✅ Zod validation passed');
+    console.log('   Category:', data.category);
+    console.log('   Sub-category:', data.sub_category);
+    console.log('   Answer options count:', data.answer_options.length);
+    console.log('   Score examples count:', data.score_examples?.length || 0);
 
     // Auto-generate question number
+    console.log('🔢 Generating question number...');
     const existingResult = await sql`
       SELECT question_number FROM question_templates
       WHERE category = ${data.category} AND sub_category = ${data.sub_category}
       ORDER BY question_number DESC
       LIMIT 1
     `;
+    console.log('   Existing questions in sub-category:', existingResult.rows.length);
 
     let questionNumber: string;
     if (existingResult.rows.length === 0) {
+      console.log('   First question in this sub-category');
       // First question in this sub-category
       const categoryCount = await sql`
         SELECT COUNT(DISTINCT sub_category) as count
@@ -168,14 +183,19 @@ export async function POST(request: Request) {
       `;
       const majorNumber = (categoryCount.rows[0].count || 0) + 1;
       questionNumber = `${majorNumber}.1`;
+      console.log('   Generated number:', questionNumber);
     } else {
       const lastNumber = existingResult.rows[0].question_number;
+      console.log('   Last number in sub-category:', lastNumber);
       const parts = lastNumber.split('.');
       const nextMinor = parseInt(parts[1] || '0') + 1;
       questionNumber = `${parts[0]}.${nextMinor}`;
+      console.log('   Generated number:', questionNumber);
     }
 
     // Insert question template
+    console.log('📝 Inserting question template...');
+    console.log('   applicable_tiers:', data.applicable_tiers);
     const templateResult = await sql`
       INSERT INTO question_templates (
         category,
@@ -202,12 +222,20 @@ export async function POST(request: Request) {
       )
       RETURNING *
     `;
+    console.log('✅ Template inserted, ID:', templateResult.rows[0].id);
 
     const template = templateResult.rows[0];
 
     // Insert answer options
+    console.log('📋 Inserting answer options...');
     for (let i = 0; i < data.answer_options.length; i++) {
       const option = data.answer_options[i];
+      console.log(`   Option ${i + 1}:`, {
+        text: option.option_text.substring(0, 50) + '...',
+        score: option.score_value,
+        order: i + 1  // Start from 1, not 0
+      });
+      
       await sql`
         INSERT INTO question_answer_options (
           question_template_id,
@@ -219,15 +247,19 @@ export async function POST(request: Request) {
           ${template.id},
           ${option.option_text},
           ${option.score_value},
-          ${i},
+          ${i + 1},
           ${option.is_example || false}
         )
       `;
     }
+    console.log('✅ All answer options inserted');
 
     // Insert score examples
+    console.log('📊 Inserting score examples...');
     if (data.score_examples && data.score_examples.length > 0) {
       for (const example of data.score_examples) {
+        console.log(`   Example (${example.score_level}):`, example.reason_text.substring(0, 50) + '...');
+        
         await sql`
           INSERT INTO question_score_examples (
             question_template_id,
@@ -242,7 +274,13 @@ export async function POST(request: Request) {
           )
         `;
       }
+      console.log('✅ All score examples inserted');
+    } else {
+      console.log('⚠️  No score examples provided');
     }
+
+    console.log('🎉 Question created successfully!');
+    console.log('🔵 POST /api/admin/questions - END\n');
 
     return NextResponse.json(
       {
@@ -256,13 +294,18 @@ export async function POST(request: Request) {
     );
   } catch (error) {
     if (error instanceof z.ZodError) {
+      console.error('❌ Zod validation error:', JSON.stringify(error.issues, null, 2));
       return NextResponse.json(
         { error: error.issues[0].message },
         { status: 400 }
       );
     }
 
-    console.error("Create question error:", error);
+    console.error('❌ Create question error:', error);
+    console.error('   Error type:', error?.constructor?.name);
+    console.error('   Error message:', error?.message);
+    console.error('   Error stack:', error?.stack);
+    
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

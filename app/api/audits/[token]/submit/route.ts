@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { sql } from "@vercel/postgres";
 import { z } from "zod";
-import { getQuestionsByTier } from "@/lib/questions";
 
 const submitSchema = z.object({
   responses: z.array(
@@ -44,16 +43,39 @@ export async function POST(
     }
 
     // Validate all required questions are answered for this tier
-    const requiredQuestions = getQuestionsByTier(audit.risk_audit_tier);
-    const requiredQuestionIds = requiredQuestions.map((q) => q.id);
+    // Fetch questions dynamically from DB (same as the form does)
+    console.log('🔄 Fetching questions from DB for tier:', audit.risk_audit_tier);
+    const questionsResult = await sql`
+      SELECT 
+        qt.question_number as id
+      FROM question_templates qt
+      WHERE qt.is_active = TRUE
+        AND qt.applicable_tiers @> ${JSON.stringify([audit.risk_audit_tier])}::jsonb
+      ORDER BY qt.category, qt.question_number
+    `;
+    
+    const requiredQuestionIds = questionsResult.rows.map((q) => q.id);
     const submittedQuestionIds = responses.map((r) => r.question_id);
+    
+    console.log('   Fetched', requiredQuestionIds.length, 'active questions from DB');
 
+    // Debug: Log question ID comparison
+    console.log('\n🔍 QUESTION ID VALIDATION');
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log('📋 Required questions (from DB for this tier):');
+    console.log('   Count:', requiredQuestionIds.length);
+    console.log('   IDs:', requiredQuestionIds);
+    console.log('\n📦 Submitted questions (from form):');
+    console.log('   Count:', submittedQuestionIds.length);
+    console.log('   IDs:', submittedQuestionIds);
+    
     // Check if all required questions are answered
     const missingQuestions = requiredQuestionIds.filter(
       (id) => !submittedQuestionIds.includes(id)
     );
 
     if (missingQuestions.length > 0) {
+      console.log('\n❌ Missing questions:', missingQuestions);
       return NextResponse.json(
         { 
           error: `Missing responses for ${missingQuestions.length} question(s): ${missingQuestions.join(", ")}`,
@@ -69,6 +91,14 @@ export async function POST(
     );
 
     if (extraQuestions.length > 0) {
+      console.log('\n❌ INVALID QUESTIONS DETECTED!');
+      console.log('   Extra questions submitted:', extraQuestions);
+      console.log('\n🔍 Detailed comparison:');
+      extraQuestions.forEach(extraId => {
+        console.log(`   "${extraId}" (${typeof extraId}) not found in required:`, requiredQuestionIds);
+        console.log(`   Exact matches: ${requiredQuestionIds.map(id => `"${id}" === "${extraId}": ${id === extraId}`).join(', ')}`);
+      });
+      
       return NextResponse.json(
         { 
           error: `Invalid question IDs submitted: ${extraQuestions.join(", ")}`,
@@ -76,6 +106,8 @@ export async function POST(
         { status: 400 }
       );
     }
+    
+    console.log('✅ All question IDs validated successfully\n');
 
     // Insert all form responses
     for (const response of responses) {
