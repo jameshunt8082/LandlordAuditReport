@@ -15,6 +15,7 @@ const styles = StyleSheet.create({
   },
   tableRow: {
     flexDirection: 'row',
+    alignItems: 'center', // Vertical centering
     borderBottomWidth: 1,
     borderBottomColor: COLORS.lightGray,
     minHeight: 30,
@@ -27,6 +28,7 @@ const styles = StyleSheet.create({
   tableCell: {
     padding: 8,
     fontSize: 10,
+    justifyContent: 'center', // Vertical centering for cell content
   },
   tableCellLeft: {
     width: '35%',

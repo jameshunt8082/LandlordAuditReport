@@ -64,6 +64,7 @@ const styles = StyleSheet.create({
   },
   complianceRow: {
     flexDirection: 'row',
+    alignItems: 'center', // Vertical centering
     paddingVertical: 8,
     paddingHorizontal: 10,
     borderBottomWidth: 1,
@@ -72,6 +73,7 @@ const styles = StyleSheet.create({
   complianceCategory: {
     width: '60%',
     fontSize: 11,
+    textAlign: 'center', // Horizontal centering
   },
   complianceScore: {
     width: '20%',
@@ -81,6 +83,7 @@ const styles = StyleSheet.create({
   },
   complianceStatus: {
     width: '20%',
+    fontSize: 11,
     textAlign: 'center',
   },
   criticalBox: {
@@ -192,25 +195,19 @@ export const ExecutiveSummary = ({ data, reportId, criticalFindings }: Executive
         <View style={styles.complianceRow}>
           <Text style={styles.complianceCategory}>Documentation</Text>
           <Text style={styles.complianceScore}>{formatScore(data.categoryScores.documentation.score)}</Text>
-          <View style={styles.complianceStatus}>
-            <TrafficLight color={getTrafficLightColor(data.categoryScores.documentation.score)} />
-          </View>
+          <TrafficLight color={getTrafficLightColor(data.categoryScores.documentation.score)} />
         </View>
         
         <View style={styles.complianceRow}>
           <Text style={styles.complianceCategory}>Landlord-Tenant Communication</Text>
           <Text style={styles.complianceScore}>{formatScore(data.categoryScores.communication.score)}</Text>
-          <View style={styles.complianceStatus}>
-            <TrafficLight color={getTrafficLightColor(data.categoryScores.communication.score)} />
-          </View>
+          <TrafficLight color={getTrafficLightColor(data.categoryScores.communication.score)} />
         </View>
         
         <View style={styles.complianceRow}>
           <Text style={styles.complianceCategory}>Evidence Gathering Systems</Text>
           <Text style={styles.complianceScore}>{formatScore(data.categoryScores.evidenceGathering.score)}</Text>
-          <View style={styles.complianceStatus}>
-            <TrafficLight color={getTrafficLightColor(data.categoryScores.evidenceGathering.score)} />
-          </View>
+          <TrafficLight color={getTrafficLightColor(data.categoryScores.evidenceGathering.score)} />
         </View>
       </View>
       

@@ -3,14 +3,8 @@ import { View, Text, StyleSheet } from '@react-pdf/renderer';
 import { COLORS } from '@/lib/pdf/styles';
 
 const styles = StyleSheet.create({
-  container: {
-    width: 35,
-    height: 31,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   symbol: {
-    fontSize: 24,
+    fontSize: 16,
   },
 });
 
@@ -25,10 +19,6 @@ interface TrafficLightProps {
 }
 
 export const TrafficLight = ({ color }: TrafficLightProps) => (
-  <View style={styles.container}>
-    <Text style={[styles.symbol, { color: COLOR_MAP[color] }]}>
-      ◀
-    </Text>
-  </View>
+  <Text style={[styles.symbol, { color: COLOR_MAP[color] }]}>◀</Text>
 );
 

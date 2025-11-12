@@ -109,8 +109,8 @@ export const styles = StyleSheet.create({
   // Headings
   h1: {
     ...FONTS.h1,
-    marginTop: 30,
-    marginBottom: 12,
+    marginTop: 0, // Reduced from 30 to match natural content flow (consistent with all pages)
+    marginBottom: 25,
   },
   h2: {
     ...FONTS.h2,

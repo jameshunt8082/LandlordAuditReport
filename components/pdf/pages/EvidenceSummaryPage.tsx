@@ -14,6 +14,7 @@ const styles = StyleSheet.create({
   },
   tableRow: {
     flexDirection: 'row',
+    alignItems: 'center', // Vertical centering
     paddingVertical: 8,
     paddingHorizontal: 10,
     borderBottomWidth: 1,
@@ -27,6 +28,7 @@ const styles = StyleSheet.create({
   categoryCell: {
     width: '50%',
     fontSize: 10,
+    textAlign: 'center', // Horizontal centering
   },
   statusCell: {
     width: '25%',
@@ -37,6 +39,7 @@ const styles = StyleSheet.create({
     width: '25%',
     fontSize: 9,
     fontFamily: 'Helvetica-Oblique',
+    textAlign: 'center', // Horizontal centering
   },
   noteBox: {
     marginTop: 20,

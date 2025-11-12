@@ -27,6 +27,7 @@ const styles = StyleSheet.create({
   },
   tableRow: {
     flexDirection: 'row',
+    alignItems: 'center', // Vertical centering
     paddingVertical: 10,
     paddingHorizontal: 8,
     borderBottomWidth: 1,
@@ -35,6 +36,7 @@ const styles = StyleSheet.create({
   requirementCell: {
     width: '45%',
     fontSize: 10,
+    textAlign: 'center', // Horizontal centering
   },
   statusCell: {
     width: '15%',
@@ -46,6 +48,7 @@ const styles = StyleSheet.create({
     width: '40%',
     fontSize: 9,
     lineHeight: 1.3,
+    textAlign: 'center', // Horizontal centering
   },
   riskBox: {
     marginTop: 20,

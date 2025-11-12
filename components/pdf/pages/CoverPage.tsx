@@ -127,7 +127,7 @@ export const CoverPage = ({
   const riskColor = getColorForTrafficLight(trafficLightColor);
   
   return (
-    <Page size="A4" style={styles.page} wrap={false}>
+    <Page size="A4" style={styles.page}>
       {/* Decorative top bar */}
       <View style={styles.decorativeTopBar} />
       
