@@ -59,31 +59,8 @@ export async function GET(
       );
     }
     
-    // 3. Check cache first
-    const cachedPDF = getCachedPDF(auditId, new Date(audit.updated_at || audit.created_at));
-    if (cachedPDF) {
-      const cacheTime = Date.now() - startTime;
-      console.log(`[PDF] ✓ Cache hit for audit ${auditId} (${cacheTime}ms)`);
-      
-      const filename = generateReportFilename(
-        transformAuditToReportData(audit, [], [], {
-          categoryScores: [],
-          overallScore: { score: 0, riskLevel: 'high', color: 'red' },
-          recommendedActions: []
-        })
-      );
-      
-      return new Response(new Uint8Array(cachedPDF.pdf), {
-        headers: {
-          'Content-Type': 'application/pdf',
-          'Content-Disposition': `attachment; filename="${filename}"`,
-          'Content-Length': cachedPDF.pdf.length.toString(),
-          'Cache-Control': 'public, max-age=86400',
-        },
-      });
-    }
-    
-    console.log(`[PDF] Cache miss - generating new PDF...`);
+    // 3. SKIP CACHE TEMPORARILY FOR DEBUGGING
+    console.log(`[PDF] Cache disabled for debugging - generating fresh PDF...`);
     
     // 4. Fetch form responses
     const responsesResult = await sql`
@@ -165,13 +142,8 @@ export async function GET(
       const pdfSize = Math.round(pdfBuffer.length / 1024);
       console.log(`[PDF] ✓ PDF rendered successfully (${pdfSize} KB)`);
     
-    // 10. Store in cache
-    setCachedPDF(
-      auditId,
-      new Date(audit.updated_at || audit.created_at),
-      pdfBuffer,
-      {} // No charts
-    );
+    // 10. SKIP CACHE STORAGE FOR DEBUGGING
+    console.log(`[PDF] Cache storage disabled for debugging`);
     
     // 11. Generate filename
     const filename = generateReportFilename(reportData);
