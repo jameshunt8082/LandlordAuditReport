@@ -1,8 +1,12 @@
 // PDF Cache System - Filesystem-based with 24h TTL
 import fs from 'fs';
 import path from 'path';
+import os from 'os';
 
-const CACHE_DIR = path.join(process.cwd(), '.cache', 'pdfs');
+// Use /tmp in production (Vercel), .cache in development
+const CACHE_DIR = process.env.VERCEL 
+  ? path.join(os.tmpdir(), 'pdf-cache')
+  : path.join(process.cwd(), '.cache', 'pdfs');
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 interface CacheEntry {
