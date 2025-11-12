@@ -1,7 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Configuración vacía de Turbopack para silenciar warning
+  // Configuración de Turbopack (Next.js 16 default)
   turbopack: {},
+  
+  // CRÍTICO: Excluir canvas de serverless bundle
+  // Canvas no puede ejecutarse en Vercel serverless (requiere binarios nativos)
+  serverExternalPackages: ['canvas', 'sharp'],
   
   // TEMPORAL: Deshabilitar minification para ver error completo
   swcMinify: false,
@@ -23,4 +27,3 @@ const nextConfig = {
 
 // Force deployment trigger
 export default nextConfig;
-
