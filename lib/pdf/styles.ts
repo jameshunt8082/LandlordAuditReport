@@ -72,7 +72,7 @@ export const LAYOUT = {
   },
   margins: {
     top: 72,         // 1 inch
-    bottom: 48,      // Reduced from 72 to allow more content per page
+    bottom: 60,      // Increased to 60 to prevent footer overlap (footer at bottom: 30 + footer height ~20)
     left: 72,
     right: 72,
   },
