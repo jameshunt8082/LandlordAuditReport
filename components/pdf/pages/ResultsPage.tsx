@@ -1,5 +1,5 @@
 // Results Page Component
-import { Page, View, Text, Image, StyleSheet } from '@react-pdf/renderer';
+import { Page, View, Text, StyleSheet } from '@react-pdf/renderer';
 import { PageHeader } from '../shared/PageHeader';
 import { PageFooter } from '../shared/PageFooter';
 import { TrafficLight } from '../shared/TrafficLight';
@@ -43,10 +43,9 @@ const styles = StyleSheet.create({
 
 interface ResultsPageProps {
   data: ReportData;
-  subcategoryChartUrl: string;
 }
 
-export const ResultsPage = ({ data, subcategoryChartUrl }: ResultsPageProps) => (
+export const ResultsPage = ({ data }: ResultsPageProps) => (
   <>
     <Page size="A4" style={styles.page}>
       <PageHeader title="Landlord Risk Audit Report" />
@@ -113,10 +112,6 @@ export const ResultsPage = ({ data, subcategoryChartUrl }: ResultsPageProps) => 
           Industry Standard: 7.0+ (acceptable for insurance and licensing). Professional Target: 8.5+ (demonstrates 
           robust compliance systems). Scores below 7.0 indicate areas requiring improvement to meet standard expectations.
         </Text>
-      </View>
-      
-      <View style={styles.chartContainer}>
-        <Image src={subcategoryChartUrl} style={styles.chart} cache={false} />
       </View>
       
       <PageFooter />

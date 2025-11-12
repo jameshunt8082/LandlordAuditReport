@@ -7,10 +7,7 @@ const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 interface CacheEntry {
   pdf: Buffer;
-  charts: {
-    pillars: string;
-    subcategory: string;
-  };
+  charts: Record<string, string>; // Flexible chart storage (currently empty)
   createdAt: number;
 }
 
@@ -105,10 +102,7 @@ export function setCachedPDF(
   auditId: string | number,
   updatedAt: Date,
   pdf: Buffer,
-  charts: {
-    pillars: string;
-    subcategory: string;
-  }
+  charts: Record<string, string> = {}
 ): void {
   try {
     ensureCacheDir();

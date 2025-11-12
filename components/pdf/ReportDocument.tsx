@@ -17,14 +17,10 @@ import { ReportData, sanitizeAddressForFilename } from '@/lib/pdf/formatters';
 
 interface ReportDocumentProps {
   data: ReportData;
-  pillarsChartUrl: string;
-  subcategoryChartUrl: string;
 }
 
 export const ReportDocument = ({ 
-  data, 
-  pillarsChartUrl, 
-  subcategoryChartUrl 
+  data
 }: ReportDocumentProps) => {
   // Generate reproducible report ID based on property address hash
   const addressHash = data.propertyAddress
@@ -101,11 +97,8 @@ export const ReportDocument = ({
       {/* Introduction Pages (3 pages) */}
       <IntroductionPage />
       
-      {/* Results Pages (2 pages) */}
-      <ResultsPage 
-        data={data}
-        subcategoryChartUrl={subcategoryChartUrl}
-      />
+      {/* Results Pages */}
+      <ResultsPage data={data} />
       
       {/* Recommendations Pages (3 pages) */}
       <RecommendationsPage data={data} />

@@ -135,20 +135,13 @@ export async function GET(
     console.log(`[PDF] Transformed data: ${reportData.questionResponses.red.length} red, ${reportData.questionResponses.orange.length} orange, ${reportData.questionResponses.green.length} green`);
     
     // 8. Generate charts in parallel
-    console.log('[PDF] Generating charts...');
-    const [pillarsChartUrl, subcategoryChartUrl] = await Promise.all([
-      generatePillarsChart(reportData),
-      generateSubcategoryChart(reportData),
-    ]);
-    console.log('[PDF] ✓ Charts generated');
+    // Charts removed from PDF (not rendering properly)
     
     // 9. Render PDF
     console.log('[PDF] Rendering PDF document...');
     const pdfBuffer = await renderToBuffer(
       React.createElement(ReportDocument, {
         data: reportData,
-        pillarsChartUrl: pillarsChartUrl,
-        subcategoryChartUrl: subcategoryChartUrl,
       }) as any
     );
     
@@ -160,10 +153,7 @@ export async function GET(
       auditId,
       new Date(audit.updated_at || audit.created_at),
       pdfBuffer,
-      {
-        pillars: pillarsChartUrl,
-        subcategory: subcategoryChartUrl,
-      }
+      {} // No charts
     );
     
     // 11. Generate filename

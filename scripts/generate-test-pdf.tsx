@@ -132,8 +132,6 @@ async function generateTestPDF() {
     const pdfBuffer = await renderToBuffer(
       React.createElement(ReportDocument, {
         data: reportData,
-        pillarsChartUrl: pillarsChartUrl,
-        subcategoryChartUrl: subcategoryChartUrl,
       }) as any
     );
     

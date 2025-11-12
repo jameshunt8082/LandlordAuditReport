@@ -4,7 +4,7 @@ import { COLORS } from '@/lib/pdf/styles';
 
 const styles = StyleSheet.create({
   symbol: {
-    fontSize: 16,
+    // fontSize will come from parent style
   },
 });
 
@@ -16,9 +16,10 @@ const COLOR_MAP = {
 
 interface TrafficLightProps {
   color: 'red' | 'orange' | 'green';
+  style?: any; // Accept external styles
 }
 
-export const TrafficLight = ({ color }: TrafficLightProps) => (
-  <Text style={[styles.symbol, { color: COLOR_MAP[color] }]}>◀</Text>
+export const TrafficLight = ({ color, style }: TrafficLightProps) => (
+  <Text style={[style, styles.symbol, { color: COLOR_MAP[color] }]}>•</Text>
 );
 

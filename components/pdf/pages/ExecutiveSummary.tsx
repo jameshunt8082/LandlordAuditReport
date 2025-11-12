@@ -40,22 +40,28 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   riskRatingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 10,
+    marginBottom: 15, // Space below score row (half of total 30px spacing)
   },
   riskLabel: {
     fontSize: 14,
     fontFamily: 'Helvetica-Bold',
+    marginBottom: 10, // Space between label and score
+  },
+  riskScoreRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   riskScore: {
     fontSize: 36,
     fontFamily: 'Helvetica-Bold',
+    marginRight: 15, // Space between score and icon
+  },
+  riskTrafficLight: {
+    fontSize: 32, // Larger bullet for prominent card (proportional to 36px score)
   },
   riskStatus: {
     fontSize: 12,
-    marginTop: 10,
+    marginTop: 15, // Space above Risk Classification (15+15=30px, balanced with 20+10=30px above)
     lineHeight: 1.4,
   },
   complianceGrid: {
@@ -83,8 +89,14 @@ const styles = StyleSheet.create({
   },
   complianceStatus: {
     width: '20%',
-    fontSize: 11,
     textAlign: 'center',
+  },
+  complianceStatusText: {
+    fontSize: 11, // For header text
+    fontFamily: 'Helvetica-Bold',
+  },
+  complianceStatusIcon: {
+    fontSize: 18, // Larger for bullet visibility
   },
   criticalBox: {
     marginTop: 20,
@@ -157,13 +169,13 @@ export const ExecutiveSummary = ({ data, reportId, criticalFindings }: Executive
       {/* Overall Risk Assessment */}
       <View style={styles.overallRiskBox}>
         <View style={styles.riskRatingRow}>
-          <View>
-            <Text style={styles.riskLabel}>Overall Compliance Score</Text>
+          <Text style={styles.riskLabel}>Overall Compliance Score</Text>
+          <View style={styles.riskScoreRow}>
             <Text style={[styles.riskScore, { color: getColorForTrafficLight(overallColor) }]}>
               {formatScore(data.overallScore)}
             </Text>
+            <TrafficLight color={overallColor} style={styles.riskTrafficLight} />
           </View>
-          <TrafficLight color={overallColor} />
         </View>
         
         <Text style={styles.riskStatus}>
@@ -189,25 +201,25 @@ export const ExecutiveSummary = ({ data, reportId, criticalFindings }: Executive
         <View style={[styles.complianceRow, { backgroundColor: COLORS.paleBlue }]}>
           <Text style={[styles.complianceCategory, { fontFamily: 'Helvetica-Bold' }]}>Category</Text>
           <Text style={[styles.complianceScore, { fontFamily: 'Helvetica-Bold' }]}>Score</Text>
-          <Text style={[styles.complianceStatus, { fontFamily: 'Helvetica-Bold' }]}>Status</Text>
+          <Text style={[styles.complianceStatus, styles.complianceStatusText]}>Status</Text>
         </View>
         
         <View style={styles.complianceRow}>
           <Text style={styles.complianceCategory}>Documentation</Text>
           <Text style={styles.complianceScore}>{formatScore(data.categoryScores.documentation.score)}</Text>
-          <TrafficLight color={getTrafficLightColor(data.categoryScores.documentation.score)} />
+          <TrafficLight color={getTrafficLightColor(data.categoryScores.documentation.score)} style={[styles.complianceStatus, styles.complianceStatusIcon]} />
         </View>
         
         <View style={styles.complianceRow}>
           <Text style={styles.complianceCategory}>Landlord-Tenant Communication</Text>
           <Text style={styles.complianceScore}>{formatScore(data.categoryScores.communication.score)}</Text>
-          <TrafficLight color={getTrafficLightColor(data.categoryScores.communication.score)} />
+          <TrafficLight color={getTrafficLightColor(data.categoryScores.communication.score)} style={[styles.complianceStatus, styles.complianceStatusIcon]} />
         </View>
         
         <View style={styles.complianceRow}>
           <Text style={styles.complianceCategory}>Evidence Gathering Systems</Text>
           <Text style={styles.complianceScore}>{formatScore(data.categoryScores.evidenceGathering.score)}</Text>
-          <TrafficLight color={getTrafficLightColor(data.categoryScores.evidenceGathering.score)} />
+          <TrafficLight color={getTrafficLightColor(data.categoryScores.evidenceGathering.score)} style={[styles.complianceStatus, styles.complianceStatusIcon]} />
         </View>
       </View>
       
