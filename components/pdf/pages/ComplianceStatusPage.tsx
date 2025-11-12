@@ -227,7 +227,7 @@ export const ComplianceStatusPage = ({ data }: ComplianceStatusPageProps) => {
       
       {/* Risk Warning if critical non-compliance */}
       {failCount > 0 && (
-        <View style={[styles.riskBox, { borderLeftColor: COLORS.red }]}>
+        <View style={[styles.riskBox, { borderLeftColor: COLORS.red }]} wrap={false}>
           <Text style={[styles.riskTitle, { color: COLORS.red }]}>
             ⚠ CRITICAL: {failCount} Statutory Violation{failCount > 1 ? 's' : ''}
           </Text>
