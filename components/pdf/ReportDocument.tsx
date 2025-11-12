@@ -82,19 +82,9 @@ export const ReportDocument = ({
         riskTier={data.riskTier}
       />
       
-      {/* Executive Summary */}
-      <ExecutiveSummary
-        data={data}
-        reportId={reportId}
-        criticalFindings={criticalFindings}
-      />
-      
-      {/* Critical Findings Summary (if critical items exist) */}
-      {data.questionResponses.red.length > 0 ? (
-        <CriticalFindingsPage criticalQuestions={data.questionResponses.red} />
-      ) : null}
-      
-      {/* TEMPORARY: Second binary test - commenting these
+      {/* TEMPORARY: Testing ONLY CoverPage
+      <ExecutiveSummary data={data} reportId={reportId} criticalFindings={criticalFindings} />
+      <CriticalFindingsPage criticalQuestions={data.questionResponses.red} />
       <MethodologyPage data={data} auditScope={auditScope} />
       <RiskRatingPage />
       <ComplianceStatusPage data={data} />
