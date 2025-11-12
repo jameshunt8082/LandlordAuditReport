@@ -37,64 +37,45 @@ export const DetailedResultsPage = ({
   redQuestions, 
   orangeQuestions, 
   greenQuestions
-}: DetailedResultsPageProps) => {
-  const pages: React.ReactElement[] = [];
-  
-  // Helper to create page with questions
-  const createQuestionsPage = (questions: QuestionResponse[], title: string, intro: string, startIdx: number, questionsPerPage: number, key: string) => {
-    const pageQuestions = questions.slice(startIdx, startIdx + questionsPerPage);
-    
-    return (
-      <Page key={key} size="A4" style={styles.page}>
-        <PageHeader title="Landlord Risk Audit Report" />
-        
-        {startIdx === 0 && (
-          <>
-            {title && <Text style={globalStyles.h2}>{title}</Text>}
-            {intro && <Text style={styles.sectionIntro}>{intro}</Text>}
-          </>
-        )}
-        
-        {pageQuestions.map((question, idx) => (
-          <QuestionCard key={`${question.number}-${idx}`} question={question} />
-        ))}
-        
-        <PageFooter />
-      </Page>
-    );
-  };
-  
-  // First page with title and introduction
-  pages.push(
-    <Page key="detailed-intro" size="A4" style={styles.page}>
+}: DetailedResultsPageProps) => (
+  <>
+    {/* Intro Page */}
+    <Page size="A4" style={styles.page}>
       <PageHeader title="Landlord Risk Audit Report" />
       
       <Text style={globalStyles.h1}>Detailed Results</Text>
       
       <View style={styles.section}>
         <Text style={globalStyles.paragraph}>
-          This section provides detailed information about each question answered in the audit, 
-          organized by score level. Questions are grouped into three categories based on their 
-          traffic light indicator.
+          This section provides a comprehensive breakdown of all audit questions, categorized by their scoring level. 
+          Each question includes the selected answer, any additional comments provided, and the associated score.
         </Text>
-      </View>
-      
-      <Text style={globalStyles.h2}>Answers and Scores</Text>
-      
-      <View style={styles.section}>
+        
         <Text style={globalStyles.paragraph}>
-          The following pages show your responses to each audit question, along with the score received 
-          and any comments provided. Use this information to understand specific areas requiring attention.
+          Questions are organized into three traffic light categories:
+        </Text>
+        
+        <Text style={globalStyles.bulletPoint}>
+          • <Text style={{ fontFamily: 'Helvetica-Bold', color: COLORS.red }}>Red (Low Scoring - 1-3)</Text>: 
+          Critical issues requiring immediate attention and corrective action.
+        </Text>
+        
+        <Text style={globalStyles.bulletPoint}>
+          • <Text style={{ fontFamily: 'Helvetica-Bold', color: COLORS.orange }}>Orange (Medium Scoring - 4-6)</Text>: 
+          Areas that need improvement to meet compliance standards.
+        </Text>
+        
+        <Text style={globalStyles.bulletPoint}>
+          • <Text style={{ fontFamily: 'Helvetica-Bold', color: COLORS.darkGreen }}>Green (High Scoring - 7-10)</Text>: 
+          Well-managed areas demonstrating good compliance practices.
         </Text>
       </View>
       
       <PageFooter />
     </Page>
-  );
-  
-  // Red (Low) Scoring Answers
-  pages.push(
-    <Page key="red-intro" size="A4" style={styles.page}>
+    
+    {/* Red Questions Section */}
+    <Page size="A4" style={styles.page}>
       <PageHeader title="Landlord Risk Audit Report" />
       
       <Text style={globalStyles.h2}>Red (Low) Scoring Answers</Text>
@@ -110,7 +91,7 @@ export const DetailedResultsPage = ({
             Critical compliance issues that could result in fines or legal action.
           </Text>
           
-          {redQuestions.slice(0, 3).map((question, idx) => (
+          {redQuestions.map((question, idx) => (
             <QuestionCard key={`red-${question.number}-${idx}`} question={question} />
           ))}
         </>
@@ -118,20 +99,9 @@ export const DetailedResultsPage = ({
       
       <PageFooter />
     </Page>
-  );
-  
-  // Continue red questions if more than 3
-  if (redQuestions.length > 3) {
-    let idx = 3;
-    while (idx < redQuestions.length) {
-      pages.push(createQuestionsPage(redQuestions, '', '', idx, 4, `red-cont-${idx}`));
-      idx += 4;
-    }
-  }
-  
-  // Orange (Medium) Scoring Statements
-  pages.push(
-    <Page key="orange-intro" size="A4" style={styles.page}>
+    
+    {/* Orange Questions Section */}
+    <Page size="A4" style={styles.page}>
       <PageHeader title="Landlord Risk Audit Report" />
       
       <Text style={globalStyles.h2}>Orange (Medium) Scoring Statements</Text>
@@ -147,7 +117,7 @@ export const DetailedResultsPage = ({
             Areas that need attention to avoid potential legal issues.
           </Text>
           
-          {orangeQuestions.slice(0, 3).map((question, idx) => (
+          {orangeQuestions.map((question, idx) => (
             <QuestionCard key={`orange-${question.number}-${idx}`} question={question} />
           ))}
         </>
@@ -155,36 +125,25 @@ export const DetailedResultsPage = ({
       
       <PageFooter />
     </Page>
-  );
-  
-  // Continue orange questions if more than 3
-  if (orangeQuestions.length > 3) {
-    let idx = 3;
-    while (idx < orangeQuestions.length) {
-      pages.push(createQuestionsPage(orangeQuestions, '', '', idx, 4, `orange-cont-${idx}`));
-      idx += 4;
-    }
-  }
-  
-  // Green (High) Scoring Answers
-  pages.push(
-    <Page key="green-intro" size="A4" style={styles.page}>
+    
+    {/* Green Questions Section */}
+    <Page size="A4" style={styles.page}>
       <PageHeader title="Landlord Risk Audit Report" />
       
       <Text style={globalStyles.h2}>Green (High) Scoring Answers</Text>
       
       {greenQuestions.length === 0 ? (
         <Text style={styles.noQuestionsText}>
-          No high-scoring areas yet. Focus on improving red and orange categories first.
+          No green-scoring answers recorded.
         </Text>
       ) : (
         <>
           <Text style={styles.sectionIntro}>
-            These questions received high scores (7-10). Excellent work! 
-            Continue maintaining these good practices and regular inspections.
+            These questions received high scores (7-10) and demonstrate good compliance practices. 
+            Well-managed areas that serve as examples of proper procedures.
           </Text>
           
-          {greenQuestions.slice(0, 3).map((question, idx) => (
+          {greenQuestions.map((question, idx) => (
             <QuestionCard key={`green-${question.number}-${idx}`} question={question} />
           ))}
         </>
@@ -192,17 +151,5 @@ export const DetailedResultsPage = ({
       
       <PageFooter />
     </Page>
-  );
-  
-  // Continue green questions if more than 3
-  if (greenQuestions.length > 3) {
-    let idx = 3;
-    while (idx < greenQuestions.length) {
-      pages.push(createQuestionsPage(greenQuestions, '', '', idx, 4, `green-cont-${idx}`));
-      idx += 4;
-    }
-  }
-  
-  return <>{pages}</>;
-};
-
+  </>
+);

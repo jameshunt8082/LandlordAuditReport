@@ -30,14 +30,8 @@ const styles = StyleSheet.create({
     width: 50,
     textAlign: 'right',
   },
-  chartContainer: {
-    marginTop: 20,
-    marginBottom: 30,
-    alignItems: 'center',
-  },
-  chart: {
-    width: 500,
-    maxHeight: 600,
+  categoryScoresContainer: {
+    marginBottom: 20,
   },
 });
 
@@ -64,7 +58,7 @@ export const ResultsPage = ({ data }: ResultsPageProps) => (
       
       <Text style={globalStyles.h2}>Category Scores</Text>
       
-      <View style={{ marginBottom: 20 }}>
+      <View style={styles.categoryScoresContainer}>
         <View style={styles.scoreRow}>
           <Text style={styles.scoreLabel}>Documentation</Text>
           <Text style={[styles.scoreValue, { color: getColorForTrafficLight(getTrafficLightColor(data.categoryScores.documentation.score)) }]}>
@@ -88,30 +82,6 @@ export const ResultsPage = ({ data }: ResultsPageProps) => (
           </Text>
           <TrafficLight color={getTrafficLightColor(data.categoryScores.evidenceGathering.score)} />
         </View>
-      </View>
-      
-      <PageFooter />
-    </Page>
-    
-    {/* Subcategory Scores Chart Page */}
-    <Page size="A4" style={styles.page}>
-      <PageHeader title="Landlord Risk Audit Report" />
-      
-      <Text style={globalStyles.h2}>Subcategory Scores</Text>
-      
-      <View style={globalStyles.paragraph}>
-        <Text>
-          The chart below shows detailed scores for each subcategory within the three main assessment areas. 
-          Subcategories are color-coded by their score: red (critical), orange (needs improvement), and green (satisfactory).
-        </Text>
-      </View>
-      
-      <View style={{ marginVertical: 10, padding: 10, backgroundColor: '#f8f9fa' }}>
-        <Text style={{ fontSize: 9, fontFamily: 'Helvetica-Bold', marginBottom: 4 }}>Benchmarking Reference:</Text>
-        <Text style={{ fontSize: 9, lineHeight: 1.3 }}>
-          Industry Standard: 7.0+ (acceptable for insurance and licensing). Professional Target: 8.5+ (demonstrates 
-          robust compliance systems). Scores below 7.0 indicate areas requiring improvement to meet standard expectations.
-        </Text>
       </View>
       
       <PageFooter />

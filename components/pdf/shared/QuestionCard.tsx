@@ -60,13 +60,13 @@ interface QuestionCardProps {
 }
 
 export const QuestionCard = ({ question }: QuestionCardProps) => (
-  <View style={styles.card} wrap={false}>
+  <View style={styles.card}>
     {/* Question Header Row */}
     <View style={styles.row}>
       <Text style={styles.questionNumber}>Q{question.number}</Text>
       <Text style={styles.questionText}>{question.questionText}</Text>
       <View style={styles.scoreIcon}>
-        <TrafficLight color={question.color} />
+        <TrafficLight color={question.color} style={{ fontSize: 16 }} />
       </View>
     </View>
     

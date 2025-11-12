@@ -227,14 +227,9 @@ export const ExecutiveSummary = ({ data, reportId, criticalFindings }: Executive
       {criticalFindings.length > 0 && (
         <View style={styles.criticalBox}>
           <Text style={styles.criticalTitle}>⚠ CRITICAL FINDINGS REQUIRING IMMEDIATE ACTION</Text>
-          {criticalFindings.slice(0, 5).map((finding, idx) => (
+          {criticalFindings.map((finding, idx) => (
             <Text key={idx} style={styles.criticalItem}>• {finding}</Text>
           ))}
-          {criticalFindings.length > 5 && (
-            <Text style={[styles.criticalItem, { fontFamily: 'Helvetica-Oblique', marginTop: 5 }]}>
-              ...and {criticalFindings.length - 5} additional critical item(s). See Detailed Results section.
-            </Text>
-          )}
         </View>
       )}
       

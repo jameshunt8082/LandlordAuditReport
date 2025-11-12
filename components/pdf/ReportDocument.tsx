@@ -74,15 +74,12 @@ export const ReportDocument = ({
         criticalFindings={criticalFindings}
       />
       
-      {/* Critical Findings Summary - FASE 2 (if critical items exist) */}
+      {/* Critical Findings Summary (if critical items exist) */}
       {data.questionResponses.red.length > 0 && (
         <CriticalFindingsPage criticalQuestions={data.questionResponses.red} />
       )}
       
-      {/* Table of Contents - REMOVED: Hardcoded page numbers don't match dynamic structure */}
-      {/* TODO: Re-implement with dynamic page calculation or remove permanently */}
-      
-      {/* Methodology & Scope - FASE 2 */}
+      {/* Methodology & Scope */}
       <MethodologyPage data={data} auditScope={auditScope} />
       
       {/* Risk Rating Definition */}

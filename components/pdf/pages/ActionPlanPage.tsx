@@ -90,7 +90,7 @@ export const ActionPlanPage = ({ data }: ActionPlanPageProps) => {
       
       {/* Immediate Actions (0-7 days) */}
       {immediateActions.length > 0 && (
-        <View style={styles.timelineSection} wrap={false}>
+        <View style={styles.timelineSection}>
           <View style={styles.timelineHeader}>
             <Text style={[styles.timelineHeaderText, { color: COLORS.red }]}>
               ⚠ IMMEDIATE ACTIONS (0-7 Days)
@@ -101,8 +101,8 @@ export const ActionPlanPage = ({ data }: ActionPlanPageProps) => {
               Critical compliance issues exposing you to immediate fines or prosecution.
             </Text>
           </View>
-          {immediateActions.slice(0, 10).map((action, idx) => (
-            <View key={idx} style={styles.actionItem}>
+          {immediateActions.map((action, idx) => (
+            <View key={idx} style={styles.actionItem} wrap={false}>
               <Text style={[styles.priorityBadge, { color: COLORS.red }]}>CRITICAL</Text>
               <Text style={styles.actionText}>{action}</Text>
             </View>
@@ -112,7 +112,7 @@ export const ActionPlanPage = ({ data }: ActionPlanPageProps) => {
       
       {/* Short-term Actions (30 days) */}
       {shortTermActions.length > 0 && (
-        <View style={styles.timelineSection} wrap={false}>
+        <View style={styles.timelineSection}>
           <View style={styles.timelineHeader}>
             <Text style={[styles.timelineHeaderText, { color: COLORS.orange }]}>
               HIGH PRIORITY (30 Days)
@@ -123,8 +123,8 @@ export const ActionPlanPage = ({ data }: ActionPlanPageProps) => {
               Significant gaps that increase tribunal vulnerability and legal risk.
             </Text>
           </View>
-          {shortTermActions.slice(0, 8).map((action, idx) => (
-            <View key={idx} style={styles.actionItem}>
+          {shortTermActions.map((action, idx) => (
+            <View key={idx} style={styles.actionItem} wrap={false}>
               <Text style={[styles.priorityBadge, { color: COLORS.orange }]}>HIGH</Text>
               <Text style={styles.actionText}>{action}</Text>
             </View>
@@ -134,7 +134,7 @@ export const ActionPlanPage = ({ data }: ActionPlanPageProps) => {
       
       {/* Medium-term Actions (90 days) */}
       {mediumTermActions.length > 0 && (
-        <View style={styles.timelineSection} wrap={false}>
+        <View style={styles.timelineSection}>
           <View style={styles.timelineHeader}>
             <Text style={[styles.timelineHeaderText, { color: COLORS.darkGreen }]}>
               MEDIUM PRIORITY (90 Days)
@@ -145,8 +145,8 @@ export const ActionPlanPage = ({ data }: ActionPlanPageProps) => {
               Best practice improvements to strengthen overall compliance position.
             </Text>
           </View>
-          {mediumTermActions.slice(0, 8).map((action, idx) => (
-            <View key={idx} style={styles.actionItem}>
+          {mediumTermActions.map((action, idx) => (
+            <View key={idx} style={styles.actionItem} wrap={false}>
               <Text style={[styles.priorityBadge, { color: COLORS.darkGreen }]}>MEDIUM</Text>
               <Text style={styles.actionText}>{action}</Text>
             </View>

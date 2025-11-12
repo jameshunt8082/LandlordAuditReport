@@ -72,7 +72,7 @@ export const LAYOUT = {
   },
   margins: {
     top: 72,         // 1 inch
-    bottom: 72,
+    bottom: 48,      // Reduced from 72 to allow more content per page
     left: 72,
     right: 72,
   },

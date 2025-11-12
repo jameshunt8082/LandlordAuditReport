@@ -1,5 +1,5 @@
 // Cover Page Component
-import { Page, View, Text, Image, StyleSheet } from '@react-pdf/renderer';
+import { Page, View, Text, StyleSheet } from '@react-pdf/renderer';
 import { DecorativeLine } from '../shared/DecorativeLine';
 import { PageFooter } from '../shared/PageFooter';
 import { COLORS, FONTS, LAYOUT, getTrafficLightColor, getColorForTrafficLight } from '@/lib/pdf/styles';
