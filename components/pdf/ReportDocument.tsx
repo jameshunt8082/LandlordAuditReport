@@ -59,12 +59,11 @@ export const ReportDocument = ({
       creator="Landlord Safeguarding Audit System"
       producer="Landlord Safeguarding"
     >
-      {/* Cover Page - Enhanced with metadata */}
+      {/* Cover Page - Clean and professional (no charts) */}
       <CoverPage
         propertyAddress={data.propertyAddress}
         startDate={data.auditStartDate}
         endDate={data.auditEndDate}
-        pillarsChartUrl={pillarsChartUrl}
         reportId={reportId}
         landlordName={data.landlordName}
         auditorName={data.auditorName}

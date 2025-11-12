@@ -20,9 +20,11 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
     marginTop: 20,
     marginBottom: -70,
+    paddingRight: 0, // Respects page margins from parent
   },
   metadataBox: {
     alignItems: 'flex-end',
+    paddingRight: 8, // Extra breathing room from edge
   },
   metadataText: {
     fontSize: 9,
@@ -97,22 +99,12 @@ const styles = StyleSheet.create({
     marginTop: 20,
     color: COLORS.darkGray,
   },
-  chartContainer: {
-    marginTop: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  chart: {
-    width: 334,
-    height: 419,
-  },
 });
 
 interface CoverPageProps {
   propertyAddress: string;
   startDate: Date;
   endDate: Date;
-  pillarsChartUrl: string;
   reportId: string;
   landlordName: string;
   auditorName: string;
@@ -120,11 +112,10 @@ interface CoverPageProps {
   riskTier: string;
 }
 
-export const CoverPage = ({ 
-  propertyAddress, 
-  startDate, 
-  endDate, 
-  pillarsChartUrl,
+export const CoverPage = ({
+  propertyAddress,
+  startDate,
+  endDate,
   reportId,
   landlordName,
   auditorName,
@@ -136,7 +127,7 @@ export const CoverPage = ({
   const riskColor = getColorForTrafficLight(trafficLightColor);
   
   return (
-    <Page size="A4" style={styles.page}>
+    <Page size="A4" style={styles.page} wrap={false}>
       {/* Decorative top bar */}
       <View style={styles.decorativeTopBar} />
       
@@ -181,11 +172,6 @@ export const CoverPage = ({
         </Text>
         
         <Text style={styles.confidentialLabel}>Confidential Contents</Text>
-      </View>
-      
-      {/* 5 Pillars Chart */}
-      <View style={styles.chartContainer}>
-        <Image src={pillarsChartUrl} style={styles.chart} cache={false} />
       </View>
       
       {/* Footer */}
