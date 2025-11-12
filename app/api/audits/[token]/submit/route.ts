@@ -42,72 +42,79 @@ export async function POST(
       );
     }
 
-    // Validate all required questions are answered for this tier
-    // Fetch questions dynamically from DB (same as the form does)
-    console.log('🔄 Fetching questions from DB for tier:', audit.risk_audit_tier);
-    const questionsResult = await sql`
+    // FLEXIBLE VALIDATION: Validate each submitted question individually
+    // This allows for questionnaire evolution (new questions added, old ones removed)
+    console.log('🔄 Validating submitted questions for tier:', audit.risk_audit_tier);
+    
+    const submittedQuestionIds = responses.map((r) => r.question_id);
+    console.log('   Submitted questions count:', submittedQuestionIds.length);
+    console.log('   Question IDs:', submittedQuestionIds);
+    
+    // Fetch ALL questions that could be valid for this tier (active + inactive)
+    // This allows audits to be completed even if questions were added/removed
+    const allQuestionsResult = await sql`
       SELECT 
-        qt.question_number as id
+        qt.question_number as id,
+        qt.is_active,
+        qt.applicable_tiers
       FROM question_templates qt
-      WHERE qt.is_active = TRUE
-        AND qt.applicable_tiers @> ${JSON.stringify([audit.risk_audit_tier])}::jsonb
-      ORDER BY qt.category, qt.question_number
+      WHERE qt.question_number = ANY(${submittedQuestionIds})
     `;
     
-    const requiredQuestionIds = questionsResult.rows.map((q) => q.id);
-    const submittedQuestionIds = responses.map((r) => r.question_id);
-    
-    console.log('   Fetched', requiredQuestionIds.length, 'active questions from DB');
-
-    // Debug: Log question ID comparison
-    console.log('\n🔍 QUESTION ID VALIDATION');
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    console.log('📋 Required questions (from DB for this tier):');
-    console.log('   Count:', requiredQuestionIds.length);
-    console.log('   IDs:', requiredQuestionIds);
-    console.log('\n📦 Submitted questions (from form):');
-    console.log('   Count:', submittedQuestionIds.length);
-    console.log('   IDs:', submittedQuestionIds);
-    
-    // Check if all required questions are answered
-    const missingQuestions = requiredQuestionIds.filter(
-      (id) => !submittedQuestionIds.includes(id)
+    const validQuestionMap = new Map(
+      allQuestionsResult.rows.map(q => [q.id, q])
     );
-
-    if (missingQuestions.length > 0) {
-      console.log('\n❌ Missing questions:', missingQuestions);
-      return NextResponse.json(
-        { 
-          error: `Missing responses for ${missingQuestions.length} question(s): ${missingQuestions.join(", ")}`,
-          missingQuestions,
-        },
-        { status: 400 }
-      );
-    }
-
-    // Validate no extra questions submitted
-    const extraQuestions = submittedQuestionIds.filter(
-      (id) => !requiredQuestionIds.includes(id)
-    );
-
-    if (extraQuestions.length > 0) {
-      console.log('\n❌ INVALID QUESTIONS DETECTED!');
-      console.log('   Extra questions submitted:', extraQuestions);
-      console.log('\n🔍 Detailed comparison:');
-      extraQuestions.forEach(extraId => {
-        console.log(`   "${extraId}" (${typeof extraId}) not found in required:`, requiredQuestionIds);
-        console.log(`   Exact matches: ${requiredQuestionIds.map(id => `"${id}" === "${extraId}": ${id === extraId}`).join(', ')}`);
-      });
+    
+    console.log('   Found in DB:', allQuestionsResult.rows.length);
+    
+    // Validate each submitted question
+    const invalidQuestions: string[] = [];
+    const wrongTierQuestions: string[] = [];
+    
+    for (const questionId of submittedQuestionIds) {
+      const questionData = validQuestionMap.get(questionId);
       
+      if (!questionData) {
+        // Question doesn't exist in database at all
+        invalidQuestions.push(questionId);
+        console.log(`   ❌ Question ${questionId}: NOT FOUND in database`);
+      } else {
+        // Check if question is applicable to this tier
+        const tiers = questionData.applicable_tiers || [];
+        if (!tiers.includes(audit.risk_audit_tier)) {
+          wrongTierQuestions.push(questionId);
+          console.log(`   ⚠️  Question ${questionId}: Wrong tier (applicable to: ${tiers.join(', ')})`);
+        } else {
+          // Question is valid (exists and correct tier)
+          const status = questionData.is_active ? '✅ VALID' : '⚠️  INACTIVE but ACCEPTED';
+          console.log(`   ${status} Question ${questionId}`);
+        }
+      }
+    }
+    
+    // Only reject if questions don't exist OR wrong tier
+    if (invalidQuestions.length > 0) {
+      console.log('\n❌ Invalid questions (not found in DB):', invalidQuestions);
       return NextResponse.json(
         { 
-          error: `Invalid question IDs submitted: ${extraQuestions.join(", ")}`,
+          error: `Invalid question IDs: ${invalidQuestions.join(", ")}. These questions do not exist.`,
         },
         { status: 400 }
       );
     }
     
-    console.log('✅ All question IDs validated successfully\n');
+    if (wrongTierQuestions.length > 0) {
+      console.log('\n❌ Wrong tier questions:', wrongTierQuestions);
+      return NextResponse.json(
+        { 
+          error: `Questions not applicable to tier ${audit.risk_audit_tier}: ${wrongTierQuestions.join(", ")}`,
+        },
+        { status: 400 }
+      );
+    }
+    
+    console.log('✅ All submitted questions validated successfully');
+    console.log(`   Accepting ${submittedQuestionIds.length} responses (allows questionnaire evolution)\n`);
 
     // Insert all form responses
     for (const response of responses) {
