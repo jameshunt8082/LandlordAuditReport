@@ -21,6 +21,22 @@ interface ReportDocumentProps {
 export const ReportDocument = ({ 
   data
 }: ReportDocumentProps) => {
+  // Validate required data exists
+  if (!data) {
+    console.error('[ReportDocument] No data provided');
+    throw new Error('Report data is required');
+  }
+  
+  if (!data.propertyAddress) {
+    console.error('[ReportDocument] Missing propertyAddress');
+    throw new Error('Property address is required');
+  }
+  
+  if (!data.landlordName) {
+    console.error('[ReportDocument] Missing landlordName');
+    throw new Error('Landlord name is required');
+  }
+  
   // Generate reproducible report ID based on property address hash
   const addressHash = data.propertyAddress
     .split('')

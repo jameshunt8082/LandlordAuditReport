@@ -310,19 +310,47 @@ function sortQuestionResponses(
   
   responses.forEach(response => {
     const question = questions.find(q => q.id === response.question_id);
-    if (!question) return;
+    if (!question) {
+      console.warn(`[Formatters] Question not found for response: ${response.question_id}`);
+      return;
+    }
+    
+    // Validate question has options array
+    if (!question.options || !Array.isArray(question.options)) {
+      console.error(`[Formatters] Question ${question.id} has no options array:`, question);
+      return;
+    }
     
     const option = question.options.find(opt => opt.value === response.answer_value);
-    if (!option) return;
+    if (!option) {
+      console.warn(`[Formatters] Option not found for question ${question.id}, value: ${response.answer_value}`);
+      console.warn(`[Formatters] Available options:`, question.options);
+      // Use fallback with generic text
+      const fallbackAnswer = `Score: ${response.answer_value}`;
+      const color = getTrafficLightColor(response.answer_value);
+      
+      const questionData: QuestionResponseData = {
+        number: question.id,
+        category: question.category || 'Unknown',
+        subcategory: question.section || 'Unknown',
+        questionText: question.text || 'Question text not available',
+        answer: fallbackAnswer,
+        score: response.answer_value,
+        color,
+      };
+      
+      sorted[color].push(questionData);
+      return;
+    }
     
     const color = getTrafficLightColor(response.answer_value);
     
     const questionData: QuestionResponseData = {
       number: question.id,
-      category: question.category,
-      subcategory: question.section,
-      questionText: question.text,
-      answer: option.label,
+      category: question.category || 'Unknown',
+      subcategory: question.section || 'Unknown',
+      questionText: question.text || 'Question text not available',
+      answer: option.label || 'No answer text',
       score: response.answer_value,
       color,
     };
