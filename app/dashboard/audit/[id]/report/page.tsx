@@ -226,15 +226,16 @@ export default function ReportPreviewPage() {
             The PDF report includes a comprehensive analysis of the landlord audit results, including:
           </p>
           <ul className="list-disc list-inside space-y-2 text-gray-700">
-            <li>Professional cover page with 5 pillars visualization</li>
-            <li>Complete table of contents</li>
-            <li>Introduction and methodology explanation</li>
-            <li>Traffic light scoring system explanation</li>
-            <li>Category and subcategory score breakdowns</li>
-            <li>Visual charts showing performance across all areas</li>
-            <li>Detailed recommendations for improvement</li>
-            <li>Follow-on services suggestions for low-scoring areas</li>
-            <li>Complete question-by-question breakdown with answers</li>
+            <li>Professional cover page with audit metadata and date range</li>
+            <li>Executive Summary with overall compliance score, risk classification, and compliance overview table</li>
+            <li>Introduction and methodology with traffic light scoring system explanation</li>
+            <li>Risk Rating page with tier classifications (Tier 0-4)</li>
+            <li>Results page with category and subcategory score breakdowns</li>
+            <li>Recommendations page with prioritized actions by impact level (Legal Exposure, Tribunal Risk, Best Practice)</li>
+            <li>Legal Compliance Status with statutory requirements assessment</li>
+            <li>Evidence Summary documenting compliance across all areas</li>
+            <li>Action Plan with prioritized timeline (0-7 days, 30 days, 90 days)</li>
+            <li>Detailed Results with complete question-by-question breakdown, answers, and comments organized by score level (Red/Orange/Green)</li>
           </ul>
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-4">
             <p className="text-sm text-blue-800">
