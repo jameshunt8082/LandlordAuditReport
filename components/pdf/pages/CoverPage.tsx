@@ -103,8 +103,8 @@ const styles = StyleSheet.create({
 
 interface CoverPageProps {
   propertyAddress: string;
-  startDate: Date;
-  endDate: Date;
+  startDate: string; // Pre-formatted date string
+  endDate: string;   // Pre-formatted date string
   reportId: string;
   landlordName: string;
   auditorName: string;
@@ -136,7 +136,7 @@ export const CoverPage = ({
         <View style={styles.metadataBox}>
           <Text style={styles.metadataText}>Report ID: {reportId}</Text>
           <Text style={styles.metadataText}>
-            Report Date: {formatReportDate(endDate)}
+            Report Date: {endDate}
           </Text>
           <Text style={[styles.tierText, { color: riskColor }]}>
             Risk Tier {tierNumber}
@@ -164,7 +164,7 @@ export const CoverPage = ({
         <View style={styles.greenLine} />
         
         <Text style={styles.dateRange}>
-          Conducted {formatReportDate(startDate)} to {formatReportDate(endDate)}
+          Conducted {startDate} to {endDate}
         </Text>
         
         <Text style={styles.auditorText}>

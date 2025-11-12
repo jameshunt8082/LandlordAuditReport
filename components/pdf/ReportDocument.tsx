@@ -12,7 +12,7 @@ import { ResultsPage } from './pages/ResultsPage';
 import { RecommendationsPage } from './pages/RecommendationsPage';
 import { ActionPlanPage } from './pages/ActionPlanPage';
 import { DetailedResultsPage } from './pages/DetailedResultsPage';
-import { ReportData, sanitizeAddressForFilename } from '@/lib/pdf/formatters';
+import { ReportData, sanitizeAddressForFilename, formatReportDate } from '@/lib/pdf/formatters';
 
 interface ReportDocumentProps {
   data: ReportData;
@@ -72,14 +72,14 @@ export const ReportDocument = ({
     >
       {/* Cover Page - Clean and professional (no charts) */}
       <CoverPage
-        propertyAddress={data.propertyAddress}
-        startDate={data.auditStartDate}
-        endDate={data.auditEndDate}
-        reportId={reportId}
-        landlordName={data.landlordName}
-        auditorName={data.auditorName}
-        overallScore={data.overallScore}
-        riskTier={data.riskTier}
+        propertyAddress={String(data.propertyAddress)}
+        startDate={formatReportDate(data.auditStartDate)}
+        endDate={formatReportDate(data.auditEndDate)}
+        reportId={String(reportId)}
+        landlordName={String(data.landlordName)}
+        auditorName={String(data.auditorName)}
+        overallScore={Number(data.overallScore)}
+        riskTier={String(data.riskTier)}
       />
       
       {/* TEMPORARY: Testing ONLY CoverPage
