@@ -90,9 +90,9 @@ export const ReportDocument = ({
       />
       
       {/* Critical Findings Summary (if critical items exist) */}
-      {data.questionResponses.red.length > 0 && (
+      {data.questionResponses.red.length > 0 ? (
         <CriticalFindingsPage criticalQuestions={data.questionResponses.red} />
-      )}
+      ) : null}
       
       {/* Methodology & Scope */}
       <MethodologyPage data={data} auditScope={auditScope} />
