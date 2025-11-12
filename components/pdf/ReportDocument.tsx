@@ -26,8 +26,14 @@ export const ReportDocument = ({
   pillarsChartUrl, 
   subcategoryChartUrl 
 }: ReportDocumentProps) => {
-  // Generate unique report ID based on property and date
-  const reportId = `LRA-${data.auditEndDate.getFullYear()}-${String(data.auditEndDate.getMonth() + 1).padStart(2, '0')}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+  // Generate reproducible report ID based on property address hash
+  const addressHash = data.propertyAddress
+    .split('')
+    .reduce((hash, char) => ((hash << 5) - hash) + char.charCodeAt(0), 0)
+    .toString(36)
+    .substring(0, 6)
+    .toUpperCase();
+  const reportId = `LRA-${data.auditEndDate.getFullYear()}-${String(data.auditEndDate.getMonth() + 1).padStart(2, '0')}-${addressHash}`;
   
   // Extract critical findings (red questions)
   const criticalFindings = data.questionResponses.red.map(q => 
@@ -42,10 +48,7 @@ export const ReportDocument = ({
     recordsExamined: true,
   };
   
-  // Estimate starting page for detailed results
-  // Cover (1) + Executive (1) + Critical Findings (1) + TOC (1) + Methodology (1) + Risk Rating (1) 
-  // + Compliance (1) + Evidence (1) + Intro (3) + Results (2) + Recommendations (3) + Action Plan (1) = 17 pages
-  const detailedResultsStartPage = 18;
+  // No manual page calculation needed - React-PDF handles pagination dynamically
   
   return (
     <Document
@@ -81,8 +84,8 @@ export const ReportDocument = ({
         <CriticalFindingsPage criticalQuestions={data.questionResponses.red} />
       )}
       
-      {/* Table of Contents */}
-      <TableOfContents />
+      {/* Table of Contents - REMOVED: Hardcoded page numbers don't match dynamic structure */}
+      {/* TODO: Re-implement with dynamic page calculation or remove permanently */}
       
       {/* Methodology & Scope - FASE 2 */}
       <MethodologyPage data={data} auditScope={auditScope} />
@@ -116,7 +119,6 @@ export const ReportDocument = ({
         redQuestions={data.questionResponses.red}
         orangeQuestions={data.questionResponses.orange}
         greenQuestions={data.questionResponses.green}
-        startPage={detailedResultsStartPage}
       />
     </Document>
   );

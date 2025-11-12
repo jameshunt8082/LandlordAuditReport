@@ -17,13 +17,12 @@ const styles = StyleSheet.create({
 
 interface PageHeaderProps {
   title: string;
-  pageNumber?: number;
 }
 
-export const PageHeader = ({ title, pageNumber }: PageHeaderProps) => (
+export const PageHeader = ({ title }: PageHeaderProps) => (
   <View style={styles.header} fixed>
     <Text>{title}</Text>
-    {pageNumber && <Text>Page {pageNumber}</Text>}
+    <Text render={({ pageNumber, totalPages }) => `Page ${pageNumber} of ${totalPages}`} />
   </View>
 );
 

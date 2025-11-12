@@ -43,7 +43,7 @@ const styles = StyleSheet.create({
 export const IntroductionPage = () => (
   <>
     <Page size="A4" style={styles.page}>
-      <PageHeader title="Landlord Risk Audit Report" pageNumber={3} />
+      <PageHeader title="Landlord Risk Audit Report" />
       
       <Text style={globalStyles.h1}>Introduction</Text>
       
@@ -132,7 +132,7 @@ export const IntroductionPage = () => (
     
     {/* Theory Page */}
     <Page size="A4" style={styles.page}>
-      <PageHeader title="Landlord Risk Audit Report" pageNumber={4} />
+      <PageHeader title="Landlord Risk Audit Report" />
       
       <Text style={globalStyles.h2}>Theory</Text>
       
@@ -218,7 +218,7 @@ export const IntroductionPage = () => (
     
     {/* Continue Theory Page */}
     <Page size="A4" style={styles.page}>
-      <PageHeader title="Landlord Risk Audit Report" pageNumber={5} />
+      <PageHeader title="Landlord Risk Audit Report" />
       
       <Text style={globalStyles.h3}>3. Evidence Gathering Systems and Procedures</Text>
       

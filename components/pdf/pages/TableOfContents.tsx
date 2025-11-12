@@ -44,7 +44,7 @@ const styles = StyleSheet.create({
 
 export const TableOfContents = () => (
   <Page size="A4" style={styles.page}>
-    <PageHeader title="Landlord Risk Audit Report" pageNumber={2} />
+    <PageHeader title="Landlord Risk Audit Report" />
     
     <Text style={styles.title}>Contents</Text>
     

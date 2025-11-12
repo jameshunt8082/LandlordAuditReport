@@ -3,7 +3,7 @@ import { Page, View, Text, StyleSheet } from '@react-pdf/renderer';
 import { PageHeader } from '../shared/PageHeader';
 import { PageFooter } from '../shared/PageFooter';
 import { TrafficLight } from '../shared/TrafficLight';
-import { styles as globalStyles, COLORS } from '@/lib/pdf/styles';
+import { styles as globalStyles, COLORS, getTrafficLightColor, getColorForTrafficLight, formatScore } from '@/lib/pdf/styles';
 import { ReportData } from '@/lib/pdf/formatters';
 
 const styles = StyleSheet.create({
@@ -110,7 +110,7 @@ interface ExecutiveSummaryProps {
 }
 
 export const ExecutiveSummary = ({ data, reportId, criticalFindings }: ExecutiveSummaryProps) => {
-  const overallColor = data.overallScore <= 3 ? 'red' : data.overallScore <= 6 ? 'orange' : 'green';
+  const overallColor = getTrafficLightColor(data.overallScore);
   const tierNumber = parseInt(data.riskTier.split('_')[1]);
   
   // Calculate compliance metrics
@@ -121,7 +121,7 @@ export const ExecutiveSummary = ({ data, reportId, criticalFindings }: Executive
   
   return (
     <Page size="A4" style={styles.page}>
-      <PageHeader title="Landlord Risk Audit Report" pageNumber={2} />
+      <PageHeader title="Landlord Risk Audit Report" />
       
       <Text style={globalStyles.h1}>Executive Summary</Text>
       
@@ -156,8 +156,8 @@ export const ExecutiveSummary = ({ data, reportId, criticalFindings }: Executive
         <View style={styles.riskRatingRow}>
           <View>
             <Text style={styles.riskLabel}>Overall Compliance Score</Text>
-            <Text style={[styles.riskScore, { color: COLORS[overallColor] }]}>
-              {data.overallScore.toFixed(1)}
+            <Text style={[styles.riskScore, { color: getColorForTrafficLight(overallColor) }]}>
+              {formatScore(data.overallScore)}
             </Text>
           </View>
           <TrafficLight color={overallColor} />
@@ -191,25 +191,25 @@ export const ExecutiveSummary = ({ data, reportId, criticalFindings }: Executive
         
         <View style={styles.complianceRow}>
           <Text style={styles.complianceCategory}>Documentation</Text>
-          <Text style={styles.complianceScore}>{data.categoryScores.documentation.score.toFixed(1)}</Text>
+          <Text style={styles.complianceScore}>{formatScore(data.categoryScores.documentation.score)}</Text>
           <View style={styles.complianceStatus}>
-            <TrafficLight color={data.categoryScores.documentation.score <= 3 ? 'red' : data.categoryScores.documentation.score <= 6 ? 'orange' : 'green'} />
+            <TrafficLight color={getTrafficLightColor(data.categoryScores.documentation.score)} />
           </View>
         </View>
         
         <View style={styles.complianceRow}>
           <Text style={styles.complianceCategory}>Landlord-Tenant Communication</Text>
-          <Text style={styles.complianceScore}>{data.categoryScores.communication.score.toFixed(1)}</Text>
+          <Text style={styles.complianceScore}>{formatScore(data.categoryScores.communication.score)}</Text>
           <View style={styles.complianceStatus}>
-            <TrafficLight color={data.categoryScores.communication.score <= 3 ? 'red' : data.categoryScores.communication.score <= 6 ? 'orange' : 'green'} />
+            <TrafficLight color={getTrafficLightColor(data.categoryScores.communication.score)} />
           </View>
         </View>
         
         <View style={styles.complianceRow}>
           <Text style={styles.complianceCategory}>Evidence Gathering Systems</Text>
-          <Text style={styles.complianceScore}>{data.categoryScores.evidenceGathering.score.toFixed(1)}</Text>
+          <Text style={styles.complianceScore}>{formatScore(data.categoryScores.evidenceGathering.score)}</Text>
           <View style={styles.complianceStatus}>
-            <TrafficLight color={data.categoryScores.evidenceGathering.score <= 3 ? 'red' : data.categoryScores.evidenceGathering.score <= 6 ? 'orange' : 'green'} />
+            <TrafficLight color={getTrafficLightColor(data.categoryScores.evidenceGathering.score)} />
           </View>
         </View>
       </View>

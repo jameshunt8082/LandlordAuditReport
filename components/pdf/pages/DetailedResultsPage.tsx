@@ -31,25 +31,22 @@ interface DetailedResultsPageProps {
   redQuestions: QuestionResponse[];
   orangeQuestions: QuestionResponse[];
   greenQuestions: QuestionResponse[];
-  startPage: number;
 }
 
 export const DetailedResultsPage = ({ 
   redQuestions, 
   orangeQuestions, 
-  greenQuestions,
-  startPage
+  greenQuestions
 }: DetailedResultsPageProps) => {
-  let currentPage = startPage;
   const pages: React.ReactElement[] = [];
   
   // Helper to create page with questions
-  const createQuestionsPage = (questions: QuestionResponse[], title: string, intro: string, startIdx: number, questionsPerPage: number) => {
+  const createQuestionsPage = (questions: QuestionResponse[], title: string, intro: string, startIdx: number, questionsPerPage: number, key: string) => {
     const pageQuestions = questions.slice(startIdx, startIdx + questionsPerPage);
     
     return (
-      <Page key={`page-${currentPage}`} size="A4" style={styles.page}>
-        <PageHeader title="Landlord Risk Audit Report" pageNumber={currentPage++} />
+      <Page key={key} size="A4" style={styles.page}>
+        <PageHeader title="Landlord Risk Audit Report" />
         
         {startIdx === 0 && (
           <>
@@ -69,8 +66,8 @@ export const DetailedResultsPage = ({
   
   // First page with title and introduction
   pages.push(
-    <Page key={`page-${currentPage}`} size="A4" style={styles.page}>
-      <PageHeader title="Landlord Risk Audit Report" pageNumber={currentPage++} />
+    <Page key="detailed-intro" size="A4" style={styles.page}>
+      <PageHeader title="Landlord Risk Audit Report" />
       
       <Text style={globalStyles.h1}>Detailed Results</Text>
       
@@ -97,8 +94,8 @@ export const DetailedResultsPage = ({
   
   // Red (Low) Scoring Answers
   pages.push(
-    <Page key={`page-${currentPage}`} size="A4" style={styles.page}>
-      <PageHeader title="Landlord Risk Audit Report" pageNumber={currentPage++} />
+    <Page key="red-intro" size="A4" style={styles.page}>
+      <PageHeader title="Landlord Risk Audit Report" />
       
       <Text style={globalStyles.h2}>Red (Low) Scoring Answers</Text>
       
@@ -127,15 +124,15 @@ export const DetailedResultsPage = ({
   if (redQuestions.length > 3) {
     let idx = 3;
     while (idx < redQuestions.length) {
-      pages.push(createQuestionsPage(redQuestions, '', '', idx, 4));
+      pages.push(createQuestionsPage(redQuestions, '', '', idx, 4, `red-cont-${idx}`));
       idx += 4;
     }
   }
   
   // Orange (Medium) Scoring Statements
   pages.push(
-    <Page key={`page-${currentPage}`} size="A4" style={styles.page}>
-      <PageHeader title="Landlord Risk Audit Report" pageNumber={currentPage++} />
+    <Page key="orange-intro" size="A4" style={styles.page}>
+      <PageHeader title="Landlord Risk Audit Report" />
       
       <Text style={globalStyles.h2}>Orange (Medium) Scoring Statements</Text>
       
@@ -164,15 +161,15 @@ export const DetailedResultsPage = ({
   if (orangeQuestions.length > 3) {
     let idx = 3;
     while (idx < orangeQuestions.length) {
-      pages.push(createQuestionsPage(orangeQuestions, '', '', idx, 4));
+      pages.push(createQuestionsPage(orangeQuestions, '', '', idx, 4, `orange-cont-${idx}`));
       idx += 4;
     }
   }
   
   // Green (High) Scoring Answers
   pages.push(
-    <Page key={`page-${currentPage}`} size="A4" style={styles.page}>
-      <PageHeader title="Landlord Risk Audit Report" pageNumber={currentPage++} />
+    <Page key="green-intro" size="A4" style={styles.page}>
+      <PageHeader title="Landlord Risk Audit Report" />
       
       <Text style={globalStyles.h2}>Green (High) Scoring Answers</Text>
       
@@ -201,7 +198,7 @@ export const DetailedResultsPage = ({
   if (greenQuestions.length > 3) {
     let idx = 3;
     while (idx < greenQuestions.length) {
-      pages.push(createQuestionsPage(greenQuestions, '', '', idx, 4));
+      pages.push(createQuestionsPage(greenQuestions, '', '', idx, 4, `green-cont-${idx}`));
       idx += 4;
     }
   }

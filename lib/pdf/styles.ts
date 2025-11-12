@@ -82,6 +82,17 @@ export const LAYOUT = {
   },
 };
 
+// Spacing Scale (8px base)
+export const SPACING = {
+  xs: 4,
+  sm: 8,
+  md: 12,
+  lg: 16,
+  xl: 20,
+  xxl: 24,
+  xxxl: 32,
+};
+
 // Common Styles
 export const styles = StyleSheet.create({
   page: {
@@ -223,15 +234,32 @@ export const styles = StyleSheet.create({
   },
 });
 
-// Helper function to get traffic light color
+// Helper function to get traffic light color based on score
 export function getTrafficLightColor(score: number): 'red' | 'orange' | 'green' {
   if (score <= 3) return 'red';
   if (score <= 6) return 'orange';
   return 'green';
 }
 
-// Helper function to get color value
+// Helper function to get color value from traffic light color
 export function getColorForTrafficLight(color: 'red' | 'orange' | 'green'): string {
   return COLORS[color];
+}
+
+// Helper function to get priority label
+export function getPriorityLabel(priority: 1 | 2 | 3 | 4): string {
+  return `P${priority}`;
+}
+
+// Helper function to get priority color
+export function getPriorityColor(priority: 1 | 2 | 3 | 4): string {
+  if (priority === 1) return COLORS.red;
+  if (priority === 2) return COLORS.orange;
+  return COLORS.darkGreen;
+}
+
+// Helper function to format decimal consistently
+export function formatScore(score: number): string {
+  return score.toFixed(1);
 }
 

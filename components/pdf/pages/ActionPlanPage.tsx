@@ -69,7 +69,8 @@ export const ActionPlanPage = ({ data }: ActionPlanPageProps) => {
   // Recommendations = Medium-term (90 days)
   Object.values(data.recommendationsByCategory).flat().forEach(rec => {
     if (rec.score < 7) {
-      mediumTermActions.push(`${rec.subcategory}: Implement recommended improvements (Score: ${rec.score.toFixed(1)})`);
+      const { formatScore } = require('@/lib/pdf/styles');
+      mediumTermActions.push(`${rec.subcategory}: Implement recommended improvements (Score: ${formatScore(rec.score)})`);
     }
   });
   

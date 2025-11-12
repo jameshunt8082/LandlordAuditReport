@@ -2,7 +2,7 @@
 import { Page, View, Text, Image, StyleSheet } from '@react-pdf/renderer';
 import { DecorativeLine } from '../shared/DecorativeLine';
 import { PageFooter } from '../shared/PageFooter';
-import { COLORS, FONTS, LAYOUT } from '@/lib/pdf/styles';
+import { COLORS, FONTS, LAYOUT, getTrafficLightColor, getColorForTrafficLight } from '@/lib/pdf/styles';
 import { formatReportDate } from '@/lib/pdf/formatters';
 
 const styles = StyleSheet.create({
@@ -14,6 +14,25 @@ const styles = StyleSheet.create({
     height: LAYOUT.decorativeBars.greenBarHeight,
     backgroundColor: COLORS.primaryGreen,
   },
+  metadataContainer: {
+    width: '100%',
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    marginTop: 20,
+    marginBottom: -70,
+  },
+  metadataBox: {
+    alignItems: 'flex-end',
+  },
+  metadataText: {
+    fontSize: 9,
+    color: COLORS.mediumGray,
+    marginBottom: 2,
+  },
+  tierText: {
+    fontSize: 10,
+    fontFamily: 'Helvetica-Bold',
+  },
   titleSection: {
     marginTop: 100,
     alignItems: 'center',
@@ -22,6 +41,12 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontFamily: 'Helvetica-Bold',
     color: COLORS.black,
+    marginBottom: 20,
+  },
+  separator: {
+    width: '100%',
+    height: 1,
+    backgroundColor: COLORS.lightGray,
     marginBottom: 20,
   },
   gradientBar: {
@@ -45,9 +70,25 @@ const styles = StyleSheet.create({
     fontFamily: 'Helvetica-Bold',
     marginBottom: 10,
   },
+  clientText: {
+    fontSize: 12,
+    marginTop: 5,
+    color: COLORS.mediumGray,
+  },
+  greenLine: {
+    width: '50%',
+    height: 1,
+    backgroundColor: COLORS.primaryGreen,
+    marginVertical: 15,
+  },
   dateRange: {
     fontSize: 12,
     marginTop: 30,
+    color: COLORS.mediumGray,
+  },
+  auditorText: {
+    fontSize: 11,
+    marginTop: 8,
     color: COLORS.mediumGray,
   },
   confidentialLabel: {
@@ -91,29 +132,32 @@ export const CoverPage = ({
   riskTier
 }: CoverPageProps) => {
   const tierNumber = parseInt(riskTier.split('_')[1]);
-  const riskColor = overallScore <= 3 ? COLORS.red : overallScore <= 6 ? COLORS.orange : COLORS.green;
+  const trafficLightColor = getTrafficLightColor(overallScore);
+  const riskColor = getColorForTrafficLight(trafficLightColor);
   
   return (
     <Page size="A4" style={styles.page}>
       {/* Decorative top bar */}
       <View style={styles.decorativeTopBar} />
       
-      {/* Report Metadata - Top Right */}
-      <View style={{ position: 'absolute', top: 20, right: 72, alignItems: 'flex-end' }}>
-        <Text style={{ fontSize: 9, color: COLORS.mediumGray, marginBottom: 2 }}>Report ID: {reportId}</Text>
-        <Text style={{ fontSize: 9, color: COLORS.mediumGray, marginBottom: 2 }}>
-          Report Date: {formatReportDate(endDate)}
-        </Text>
-        <Text style={{ fontSize: 10, fontFamily: 'Helvetica-Bold', color: riskColor }}>
-          Risk Tier {tierNumber}
-        </Text>
+      {/* Report Metadata - Top Right (using flex, not absolute) */}
+      <View style={styles.metadataContainer}>
+        <View style={styles.metadataBox}>
+          <Text style={styles.metadataText}>Report ID: {reportId}</Text>
+          <Text style={styles.metadataText}>
+            Report Date: {formatReportDate(endDate)}
+          </Text>
+          <Text style={[styles.tierText, { color: riskColor }]}>
+            Risk Tier {tierNumber}
+          </Text>
+        </View>
       </View>
       
       {/* Title section */}
       <View style={styles.titleSection}>
         <Text style={styles.mainTitle}>Landlord Risk Audit Report</Text>
         
-        <View style={{ width: '100%', height: 1, backgroundColor: COLORS.lightGray, marginBottom: 20 }} />
+        <View style={styles.separator} />
         
         <View style={styles.gradientBar}>
           <Text style={styles.gradientBarText}>COMPLIANCE ASSESSMENT</Text>
@@ -121,18 +165,18 @@ export const CoverPage = ({
         
         <View style={styles.propertyInfo}>
           <Text style={styles.propertyAddress}>Report for {propertyAddress}</Text>
-          <Text style={{ fontSize: 12, marginTop: 5, color: COLORS.mediumGray }}>
+          <Text style={styles.clientText}>
             Client: {landlordName}
           </Text>
         </View>
         
-        <View style={{ width: '50%', height: 1, backgroundColor: COLORS.primaryGreen, marginVertical: 15 }} />
+        <View style={styles.greenLine} />
         
         <Text style={styles.dateRange}>
           Conducted {formatReportDate(startDate)} to {formatReportDate(endDate)}
         </Text>
         
-        <Text style={{ fontSize: 11, marginTop: 8, color: COLORS.mediumGray }}>
+        <Text style={styles.auditorText}>
           Audited by: {auditorName}
         </Text>
         
@@ -141,7 +185,7 @@ export const CoverPage = ({
       
       {/* 5 Pillars Chart */}
       <View style={styles.chartContainer}>
-        <Image src={pillarsChartUrl} style={styles.chart} />
+        <Image src={pillarsChartUrl} style={styles.chart} cache={false} />
       </View>
       
       {/* Footer */}

@@ -2,7 +2,7 @@
 import { Page, View, Text, StyleSheet } from '@react-pdf/renderer';
 import { PageHeader } from '../shared/PageHeader';
 import { PageFooter } from '../shared/PageFooter';
-import { styles as globalStyles, COLORS } from '@/lib/pdf/styles';
+import { styles as globalStyles, COLORS, getPriorityLabel, getPriorityColor, formatScore } from '@/lib/pdf/styles';
 import { ReportData, Recommendation, ServiceRecommendation } from '@/lib/pdf/formatters';
 
 const styles = StyleSheet.create({
@@ -96,8 +96,8 @@ const RecommendationTable = ({
       
       {/* Table Rows */}
       {sortedRecs.map((rec, index) => {
-        const priorityLabel = rec.priority === 1 ? 'P1' : rec.priority === 2 ? 'P2' : rec.priority === 3 ? 'P3' : 'P4';
-        const priorityColor = rec.priority === 1 ? COLORS.red : rec.priority === 2 ? COLORS.orange : COLORS.darkGreen;
+        const priorityLabel = getPriorityLabel(rec.priority);
+        const priorityColor = getPriorityColor(rec.priority);
         
         return (
           <View key={index} style={styles.tableRow} wrap={false}>
@@ -111,7 +111,7 @@ const RecommendationTable = ({
             </View>
             <View style={[styles.tableCell, { width: '30%' }]}>
               <Text style={styles.subcategoryName}>{rec.subcategory}</Text>
-              <Text style={styles.score}>Score: {rec.score.toFixed(1)}</Text>
+              <Text style={styles.score}>Score: {formatScore(rec.score)}</Text>
             </View>
             <View style={[styles.tableCell, { width: '55%' }]}>
               {rec.suggestions.map((suggestion, idx) => (
@@ -175,7 +175,7 @@ const ServicesTable = ({ services }: { services: ServiceRecommendation[] }) => {
 export const RecommendationsPage = ({ data }: RecommendationsPageProps) => (
   <>
     <Page size="A4" style={styles.page}>
-      <PageHeader title="Landlord Risk Audit Report" pageNumber={10} />
+      <PageHeader title="Landlord Risk Audit Report" />
       
       <Text style={globalStyles.h1}>Recommended Actions</Text>
       
@@ -197,7 +197,7 @@ export const RecommendationsPage = ({ data }: RecommendationsPageProps) => (
     </Page>
     
     <Page size="A4" style={styles.page}>
-      <PageHeader title="Landlord Risk Audit Report" pageNumber={11} />
+      <PageHeader title="Landlord Risk Audit Report" />
       
       <RecommendationTable 
         title="Landlord-Tenant Communication" 
@@ -213,7 +213,7 @@ export const RecommendationsPage = ({ data }: RecommendationsPageProps) => (
     </Page>
     
     <Page size="A4" style={styles.page}>
-      <PageHeader title="Landlord Risk Audit Report" pageNumber={12} />
+      <PageHeader title="Landlord Risk Audit Report" />
       
       <Text style={globalStyles.h2}>Follow-on Products and Services</Text>
       

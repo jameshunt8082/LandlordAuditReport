@@ -3,7 +3,7 @@ import { Page, View, Text, Image, StyleSheet } from '@react-pdf/renderer';
 import { PageHeader } from '../shared/PageHeader';
 import { PageFooter } from '../shared/PageFooter';
 import { TrafficLight } from '../shared/TrafficLight';
-import { styles as globalStyles, COLORS } from '@/lib/pdf/styles';
+import { styles as globalStyles, COLORS, getTrafficLightColor, getColorForTrafficLight, formatScore } from '@/lib/pdf/styles';
 import { ReportData } from '@/lib/pdf/formatters';
 
 const styles = StyleSheet.create({
@@ -49,7 +49,7 @@ interface ResultsPageProps {
 export const ResultsPage = ({ data, subcategoryChartUrl }: ResultsPageProps) => (
   <>
     <Page size="A4" style={styles.page}>
-      <PageHeader title="Landlord Risk Audit Report" pageNumber={8} />
+      <PageHeader title="Landlord Risk Audit Report" />
       
       <Text style={globalStyles.h1}>The Results</Text>
       
@@ -57,10 +57,10 @@ export const ResultsPage = ({ data, subcategoryChartUrl }: ResultsPageProps) => 
       
       <View style={styles.scoreRow}>
         <Text style={styles.scoreLabel}>Overall Compliance Score</Text>
-        <Text style={[styles.scoreValue, { color: data.overallScore <= 3 ? COLORS.red : data.overallScore <= 6 ? COLORS.orange : COLORS.green }]}>
-          {data.overallScore.toFixed(1)}
+        <Text style={[styles.scoreValue, { color: getColorForTrafficLight(getTrafficLightColor(data.overallScore)) }]}>
+          {formatScore(data.overallScore)}
         </Text>
-        <TrafficLight color={data.overallScore <= 3 ? 'red' : data.overallScore <= 6 ? 'orange' : 'green'} />
+        <TrafficLight color={getTrafficLightColor(data.overallScore)} />
       </View>
       
       <Text style={globalStyles.h2}>Category Scores</Text>
@@ -68,26 +68,26 @@ export const ResultsPage = ({ data, subcategoryChartUrl }: ResultsPageProps) => 
       <View style={{ marginBottom: 20 }}>
         <View style={styles.scoreRow}>
           <Text style={styles.scoreLabel}>Documentation</Text>
-          <Text style={[styles.scoreValue, { color: data.categoryScores.documentation.score <= 3 ? COLORS.red : data.categoryScores.documentation.score <= 6 ? COLORS.orange : COLORS.green }]}>
-            {data.categoryScores.documentation.score.toFixed(1)}
+          <Text style={[styles.scoreValue, { color: getColorForTrafficLight(getTrafficLightColor(data.categoryScores.documentation.score)) }]}>
+            {formatScore(data.categoryScores.documentation.score)}
           </Text>
-          <TrafficLight color={data.categoryScores.documentation.score <= 3 ? 'red' : data.categoryScores.documentation.score <= 6 ? 'orange' : 'green'} />
+          <TrafficLight color={getTrafficLightColor(data.categoryScores.documentation.score)} />
         </View>
         
         <View style={styles.scoreRow}>
           <Text style={styles.scoreLabel}>Landlord-Tenant Communication</Text>
-          <Text style={[styles.scoreValue, { color: data.categoryScores.communication.score <= 3 ? COLORS.red : data.categoryScores.communication.score <= 6 ? COLORS.orange : COLORS.green }]}>
-            {data.categoryScores.communication.score.toFixed(1)}
+          <Text style={[styles.scoreValue, { color: getColorForTrafficLight(getTrafficLightColor(data.categoryScores.communication.score)) }]}>
+            {formatScore(data.categoryScores.communication.score)}
           </Text>
-          <TrafficLight color={data.categoryScores.communication.score <= 3 ? 'red' : data.categoryScores.communication.score <= 6 ? 'orange' : 'green'} />
+          <TrafficLight color={getTrafficLightColor(data.categoryScores.communication.score)} />
         </View>
         
         <View style={styles.scoreRow}>
           <Text style={styles.scoreLabel}>Evidence Gathering Systems and Procedures</Text>
-          <Text style={[styles.scoreValue, { color: data.categoryScores.evidenceGathering.score <= 3 ? COLORS.red : data.categoryScores.evidenceGathering.score <= 6 ? COLORS.orange : COLORS.green }]}>
-            {data.categoryScores.evidenceGathering.score.toFixed(1)}
+          <Text style={[styles.scoreValue, { color: getColorForTrafficLight(getTrafficLightColor(data.categoryScores.evidenceGathering.score)) }]}>
+            {formatScore(data.categoryScores.evidenceGathering.score)}
           </Text>
-          <TrafficLight color={data.categoryScores.evidenceGathering.score <= 3 ? 'red' : data.categoryScores.evidenceGathering.score <= 6 ? 'orange' : 'green'} />
+          <TrafficLight color={getTrafficLightColor(data.categoryScores.evidenceGathering.score)} />
         </View>
       </View>
       
@@ -96,7 +96,7 @@ export const ResultsPage = ({ data, subcategoryChartUrl }: ResultsPageProps) => 
     
     {/* Subcategory Scores Chart Page */}
     <Page size="A4" style={styles.page}>
-      <PageHeader title="Landlord Risk Audit Report" pageNumber={9} />
+      <PageHeader title="Landlord Risk Audit Report" />
       
       <Text style={globalStyles.h2}>Subcategory Scores</Text>
       
@@ -116,7 +116,7 @@ export const ResultsPage = ({ data, subcategoryChartUrl }: ResultsPageProps) => 
       </View>
       
       <View style={styles.chartContainer}>
-        <Image src={subcategoryChartUrl} style={styles.chart} />
+        <Image src={subcategoryChartUrl} style={styles.chart} cache={false} />
       </View>
       
       <PageFooter />

@@ -183,7 +183,7 @@ function calculateSubcategoryScores(
     subcategoryScores.push({
       name: subcategory,
       category,
-      score: Number(avgScore.toFixed(2)),
+      score: Number(avgScore.toFixed(1)),
       color: getTrafficLightColor(avgScore),
       questionsCount: data.scores.length,
     });
