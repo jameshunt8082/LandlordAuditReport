@@ -275,6 +275,29 @@ export default function NewQuestionPage() {
               )}
             </div>
 
+            <div className="space-y-2">
+              <Label htmlFor="motivation_learning_point" className="flex items-center gap-2">
+                Motivation / Learning Point
+                <button
+                  type="button"
+                  className="text-gray-400 hover:text-gray-600"
+                  title="Expert explanation shown to landlords. Direct, professional tone explaining legal consequences and risks."
+                >
+                  <Info className="w-4 h-4" />
+                </button>
+              </Label>
+              <Textarea
+                id="motivation_learning_point"
+                {...register("motivation_learning_point")}
+                placeholder="Why this question matters: explain legal consequences, fines, tribunal risks..."
+                rows={3}
+                className="resize-none focus-visible:ring-2 focus-visible:ring-ring text-sm italic text-gray-600"
+              />
+              <p className="text-xs text-gray-500">
+                Shown in italic below the question. Be direct and explain real consequences (fines, legal action, tribunal losses).
+              </p>
+            </div>
+
             <div className="flex items-center space-x-2">
               <input
                 type="checkbox"
