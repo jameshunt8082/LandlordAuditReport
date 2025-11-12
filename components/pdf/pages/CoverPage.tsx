@@ -72,48 +72,81 @@ interface CoverPageProps {
   startDate: Date;
   endDate: Date;
   pillarsChartUrl: string;
+  reportId: string;
+  landlordName: string;
+  auditorName: string;
+  overallScore: number;
+  riskTier: string;
 }
 
 export const CoverPage = ({ 
   propertyAddress, 
   startDate, 
   endDate, 
-  pillarsChartUrl 
-}: CoverPageProps) => (
-  <Page size="A4" style={styles.page}>
-    {/* Decorative top bar */}
-    <View style={styles.decorativeTopBar} />
-    
-    {/* Title section */}
-    <View style={styles.titleSection}>
-      <Text style={styles.mainTitle}>Landlord Risk Audit Report</Text>
+  pillarsChartUrl,
+  reportId,
+  landlordName,
+  auditorName,
+  overallScore,
+  riskTier
+}: CoverPageProps) => {
+  const tierNumber = parseInt(riskTier.split('_')[1]);
+  const riskColor = overallScore <= 3 ? COLORS.red : overallScore <= 6 ? COLORS.orange : COLORS.green;
+  
+  return (
+    <Page size="A4" style={styles.page}>
+      {/* Decorative top bar */}
+      <View style={styles.decorativeTopBar} />
       
-      <View style={{ width: '100%', height: 1, backgroundColor: COLORS.lightGray, marginBottom: 20 }} />
-      
-      <View style={styles.gradientBar}>
-        <Text style={styles.gradientBarText}>LANDLORD RISK AUDIT</Text>
+      {/* Report Metadata - Top Right */}
+      <View style={{ position: 'absolute', top: 20, right: 72, alignItems: 'flex-end' }}>
+        <Text style={{ fontSize: 9, color: COLORS.mediumGray, marginBottom: 2 }}>Report ID: {reportId}</Text>
+        <Text style={{ fontSize: 9, color: COLORS.mediumGray, marginBottom: 2 }}>
+          Report Date: {formatReportDate(endDate)}
+        </Text>
+        <Text style={{ fontSize: 10, fontFamily: 'Helvetica-Bold', color: riskColor }}>
+          Risk Tier {tierNumber}
+        </Text>
       </View>
       
-      <View style={styles.propertyInfo}>
-        <Text style={styles.propertyAddress}>Report for {propertyAddress}</Text>
+      {/* Title section */}
+      <View style={styles.titleSection}>
+        <Text style={styles.mainTitle}>Landlord Risk Audit Report</Text>
+        
+        <View style={{ width: '100%', height: 1, backgroundColor: COLORS.lightGray, marginBottom: 20 }} />
+        
+        <View style={styles.gradientBar}>
+          <Text style={styles.gradientBarText}>LANDLORD RISK AUDIT</Text>
+        </View>
+        
+        <View style={styles.propertyInfo}>
+          <Text style={styles.propertyAddress}>Report for {propertyAddress}</Text>
+          <Text style={{ fontSize: 12, marginTop: 5, color: COLORS.mediumGray }}>
+            Client: {landlordName}
+          </Text>
+        </View>
+        
+        <View style={{ width: '50%', height: 1, backgroundColor: COLORS.primaryGreen, marginVertical: 15 }} />
+        
+        <Text style={styles.dateRange}>
+          Conducted {formatReportDate(startDate)} to {formatReportDate(endDate)}
+        </Text>
+        
+        <Text style={{ fontSize: 11, marginTop: 8, color: COLORS.mediumGray }}>
+          Audited by: {auditorName}
+        </Text>
+        
+        <Text style={styles.confidentialLabel}>Confidential Contents</Text>
       </View>
       
-      <View style={{ width: '50%', height: 1, backgroundColor: COLORS.primaryGreen, marginVertical: 15 }} />
+      {/* 5 Pillars Chart */}
+      <View style={styles.chartContainer}>
+        <Image src={pillarsChartUrl} style={styles.chart} />
+      </View>
       
-      <Text style={styles.dateRange}>
-        Conducted {formatReportDate(startDate)} to {formatReportDate(endDate)}
-      </Text>
-      
-      <Text style={styles.confidentialLabel}>Confidential Contents</Text>
-    </View>
-    
-    {/* 5 Pillars Chart */}
-    <View style={styles.chartContainer}>
-      <Image src={pillarsChartUrl} style={styles.chart} />
-    </View>
-    
-    {/* Footer */}
-    <PageFooter />
-  </Page>
-);
+      {/* Footer */}
+      <PageFooter />
+    </Page>
+  );
+};
 
