@@ -292,7 +292,7 @@ export async function POST(request: Request) {
       },
       { status: 201 }
     );
-  } catch (error) {
+  } catch (error: any) {
     if (error instanceof z.ZodError) {
       console.error('❌ Zod validation error:', JSON.stringify(error.issues, null, 2));
       return NextResponse.json(

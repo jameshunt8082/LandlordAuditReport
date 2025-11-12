@@ -10,6 +10,7 @@ import { Progress } from "@/components/ui/progress";
 import { Audit, FormResponse, Note } from "@/types/database";
 import { questions } from "@/lib/questions";
 import { CategoryScore, OverallScore, RecommendedAction } from "@/lib/scoring";
+import { FileText } from "lucide-react";
 
 interface ReviewData {
   audit: Audit;
@@ -99,14 +100,22 @@ export default function AuditReviewPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-start justify-between">
+      <div className="flex items-start justify-between flex-wrap gap-4">
         <div>
           <h1 className="text-3xl font-bold">{audit.client_name}</h1>
           <p className="text-gray-600 mt-1">{audit.property_address}</p>
         </div>
-        <Link href="/dashboard">
-          <Button variant="outline">← Back to Dashboard</Button>
-        </Link>
+        <div className="flex gap-2">
+          <Link href="/dashboard">
+            <Button variant="outline">← Back to Dashboard</Button>
+          </Link>
+          <Link href={`/dashboard/audit/${auditId}/report`}>
+            <Button className="bg-green-600 hover:bg-green-700">
+              <FileText className="mr-2 h-4 w-4" />
+              Generate PDF Report
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {/* Overall Score */}
