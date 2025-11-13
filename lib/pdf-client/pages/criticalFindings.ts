@@ -181,7 +181,7 @@ export async function criticalFindings(doc: jsPDF, data: ReportData): Promise<vo
     doc.setFontSize(13);
     doc.setFont('helvetica', 'bold');
     setTextColorHex(doc, COLORS.darkGreen);
-    doc.text('✓ No Critical Non-Compliance Issues Identified', startX + 10, yPos + 12);
+    doc.text('No Critical Non-Compliance Issues Identified', startX + 10, yPos + 12);
     
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');

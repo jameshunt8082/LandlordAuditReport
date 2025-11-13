@@ -102,10 +102,10 @@ export async function methodology(doc: jsPDF, data: ReportData): Promise<void> {
   yPos += 10;
   
   const scopeData = [
-    ['Documentation Review', '✓ Completed'],
-    ['Records Examination', '✓ Completed'],
-    ['Site Inspection', '✗ Not Included'],
-    ['Tenant Interviews', '✗ Not Included'],
+    ['Documentation Review', 'Completed'],
+    ['Records Examination', 'Completed'],
+    ['Site Inspection', 'Not Included'],
+    ['Tenant Interviews', 'Not Included'],
   ];
   
   autoTable(doc, {

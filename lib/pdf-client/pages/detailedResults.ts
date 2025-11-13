@@ -147,7 +147,7 @@ export async function detailedResults(doc: jsPDF, data: ReportData): Promise<voi
     doc.setFontSize(11);
     doc.setFont('helvetica', 'normal');
     setTextColorHex(doc, COLORS.darkGreen);
-    doc.text('✓ Excellent! You have no critical issues. All questions scored above the red threshold.', startX, yPos);
+    doc.text('Excellent! You have no critical issues. All questions scored above the red threshold.', startX, yPos);
     yPos += 15;
   } else {
     doc.setFontSize(11);
@@ -182,7 +182,7 @@ export async function detailedResults(doc: jsPDF, data: ReportData): Promise<voi
     doc.setFontSize(11);
     doc.setFont('helvetica', 'normal');
     setTextColorHex(doc, COLORS.darkGreen);
-    doc.text('✓ Great! You have no medium-level issues.', startX, yPos);
+    doc.text('Great! You have no medium-level issues.', startX, yPos);
     yPos += 15;
   } else {
     doc.setFontSize(11);
