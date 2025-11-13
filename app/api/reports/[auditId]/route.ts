@@ -133,8 +133,9 @@ export async function GET(
     
       // 9. Render PDF
       console.log('[PDF] Step 9: Rendering PDF document with React-PDF...');
-      const element = <ReportDocument data={reportData} />;
-      const pdfBuffer = await renderToBuffer(element);
+      const pdfBuffer = await renderToBuffer(
+        React.createElement(ReportDocument, { data: reportData }) as any
+      );
       
       const pdfSize = Math.round(pdfBuffer.length / 1024);
       console.log(`[PDF] ✓ PDF rendered successfully (${pdfSize} KB)`);
