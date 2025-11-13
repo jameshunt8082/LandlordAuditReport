@@ -82,74 +82,47 @@ export default function ReportPreviewPage() {
         setPdfUrl(url);
         console.log('[PDF] ✅ Server-side generation worked!');
       } else {
-        // Server failed, fallback to CLIENT-SIDE with jsPDF
+        // Server failed, fallback to CLIENT-SIDE with complete jsPDF generator
         console.log('[PDF] Server failed, using client-side jsPDF...');
         
-        // Validate we have data
-        if (!auditInfo) {
-          throw new Error('Audit info not loaded yet');
+        console.log('[PDF] Fetching complete audit data...');
+        
+        // Fetch complete audit data
+        const auditResponse = await fetch(`/api/audits/review/${auditId}`);
+        if (!auditResponse.ok) {
+          throw new Error('Failed to fetch audit data');
         }
         
-        // Import jsPDF
-        const { default: jsPDF } = await import('jspdf');
+        const auditData = await auditResponse.json();
+        console.log('[PDF] Audit data fetched:', {
+          audit: auditData.audit?.id,
+          responses: auditData.responses?.length,
+          questions: auditData.questions?.length,
+        });
         
-        console.log('[PDF] Creating PDF with jsPDF...');
+        // Import complete generator and data transformer
+        const { generateCompletePDF } = await import('@/lib/pdf-client/generator');
+        const { transformAuditToReportData } = await import('@/lib/pdf/formatters');
         
-        // Create PDF
-        const doc = new jsPDF();
+        console.log('[PDF] Transforming audit data to report format...');
         
-        // Title
-        doc.setFontSize(24);
-        doc.setFont('helvetica', 'bold');
-        doc.text('Landlord Risk Audit Report', 20, 30);
+        // Transform to ReportData format
+        const reportData = transformAuditToReportData(
+          auditData.audit,
+          auditData.responses,
+          auditData.questions,
+          auditData.scores
+        );
         
-        // Property Info
-        doc.setFontSize(14);
-        doc.setFont('helvetica', 'bold');
-        doc.text('Audit Information', 20, 50);
+        console.log('[PDF] Generating complete PDF...');
         
-        doc.setFontSize(12);
-        doc.setFont('helvetica', 'normal');
-        doc.text(`Property Address: ${auditInfo.propertyAddress}`, 20, 65);
-        doc.text(`Client Name: ${auditInfo.clientName}`, 20, 75);
-        doc.text(`Overall Score: ${auditInfo.overallScore || 'N/A'}/10`, 20, 85);
-        doc.text(`Report Generated: ${new Date().toLocaleDateString()}`, 20, 95);
-        
-        // Summary Section
-        doc.setFontSize(14);
-        doc.setFont('helvetica', 'bold');
-        doc.text('Summary', 20, 115);
-        
-        doc.setFontSize(11);
-        doc.setFont('helvetica', 'normal');
-        const summaryText = 'This is a minimal PDF report generated client-side using jsPDF. ' +
-                           'Full report generation with all details is currently in development.';
-        const splitText = doc.splitTextToSize(summaryText, 170);
-        doc.text(splitText, 20, 130);
-        
-        // Note
-        doc.setFontSize(10);
-        doc.setTextColor(100, 100, 100);
-        doc.text('Note: This is a simplified report. Full report features coming soon.', 20, 160)
-        
-        // Footer
-        const pageCount = doc.getNumberOfPages();
-        for (let i = 1; i <= pageCount; i++) {
-          doc.setPage(i);
-          doc.setFontSize(10);
-          doc.setTextColor(128, 128, 128);
-          doc.text(
-            `Page ${i} of ${pageCount}`,
-            doc.internal.pageSize.getWidth() / 2,
-            doc.internal.pageSize.getHeight() - 10,
-            { align: 'center' }
-          );
-        }
+        // Generate complete PDF
+        const doc = await generateCompletePDF(reportData);
         
         console.log('[PDF] Saving PDF...');
         doc.save(`landlord-audit-report-${auditId}.pdf`);
         
-        console.log('[PDF] ✅ Client-side jsPDF generation worked!');
+        console.log('[PDF] ✅ Complete client-side PDF generation succeeded!');
       }
     } catch (error) {
       console.error("Download error:", error);
