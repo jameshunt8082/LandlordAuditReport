@@ -117,11 +117,8 @@ export default function ReportPreviewPage() {
         
         console.log('[PDF] Data validation passed');
         
-        // EXPERIMENT: Try @react-pdf/renderer now that questions are included
-        console.log('[PDF] Trying @react-pdf/renderer with complete data...');
-        
-        const { pdf } = await import('@react-pdf/renderer');
-        const ReportDocument = (await import('@/components/pdf/ReportDocument')).default;
+        // Import complete generator and data transformer
+        const { generateCompletePDF } = await import('@/lib/pdf-client/generator');
         const { transformAuditToReportData } = await import('@/lib/pdf/formatters');
         
         console.log('[PDF] Transforming audit data to report format...');
@@ -134,29 +131,15 @@ export default function ReportPreviewPage() {
           auditData.scores
         );
         
-        console.log('[PDF] ReportData created, rendering @react-pdf document...');
+        console.log('[PDF] Generating complete PDF...');
         
-        // Create React element
-        const element = React.createElement(ReportDocument, { data: reportData });
+        // Generate complete PDF
+        const doc = await generateCompletePDF(reportData);
         
-        console.log('[PDF] Generating blob with @react-pdf...');
+        console.log('[PDF] Saving PDF...');
+        doc.save(`landlord-audit-report-${auditId}.pdf`);
         
-        // Generate blob
-        const blob = await pdf(element).toBlob();
-        
-        console.log('[PDF] Blob generated, downloading...');
-        
-        // Download
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `landlord-audit-report-${auditId}.pdf`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        
-        console.log('[PDF] ✅ @react-pdf/renderer worked with complete data!');
+        console.log('[PDF] ✅ Complete client-side PDF generation succeeded!');
       }
     } catch (error) {
       console.error("Download error:", error);
