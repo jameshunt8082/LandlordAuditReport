@@ -54,13 +54,19 @@ function drawQuestionCard(
   doc.text('Answer:', startX + cardPadding, cardY);
   cardY += 5;
   
-  // Answer text with traffic light
+  // Answer text with traffic light as bullet
   doc.setFont('helvetica', 'normal');
-  const answerWrapped = doc.splitTextToSize(`• ${question.answer}`, contentWidth - cardPadding * 3);
-  doc.text(answerWrapped, startX + cardPadding, cardY);
   
-  // Draw traffic light next to bullet
-  drawTrafficLight(doc, startX + cardPadding + 2, cardY - 1.5, question.color, 1.5);
+  // Draw traffic light BEFORE text (as bullet replacement)
+  const bulletX = startX + cardPadding + 2;
+  const bulletY = cardY - 1.5;
+  drawTrafficLight(doc, bulletX, bulletY, question.color, 1.5);
+  
+  // Answer text (NO bullet character, traffic light IS the bullet)
+  const answerTextX = startX + cardPadding + 8; // Start after traffic light
+  const answerMaxWidth = contentWidth - cardPadding * 3 - 8;
+  const answerWrapped = doc.splitTextToSize(question.answer, answerMaxWidth);
+  doc.text(answerWrapped, answerTextX, cardY);
   
   cardY += answerWrapped.length * 4 + cardPadding;
   
