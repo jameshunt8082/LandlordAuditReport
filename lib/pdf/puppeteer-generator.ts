@@ -13,11 +13,18 @@ export async function generatePDFFromHTML(html: string): Promise<Buffer> {
   let browser;
   
   try {
+    // Get Chromium executable path
+    // Uses CHROMIUM_REMOTE_EXEC_PATH env var in Vercel to download binary
+    const executablePath = await chromium.executablePath();
+    
+    console.log('[Puppeteer] Chromium path:', executablePath);
+    console.log('[Puppeteer] Remote exec path:', process.env.CHROMIUM_REMOTE_EXEC_PATH || 'not set');
+    
     // Launch browser with Chromium optimized for serverless
     browser = await puppeteer.launch({
       args: chromium.args,
       defaultViewport: { width: 1920, height: 1080 },
-      executablePath: await chromium.executablePath(),
+      executablePath,
       headless: true,
     });
     

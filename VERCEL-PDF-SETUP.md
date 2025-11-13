@@ -44,11 +44,21 @@ After deployment `5d5d866` is live:
 
 ---
 
-## 🔧 Optional: Vercel Environment Variable (If Still Failing)
+## 🔧 CRITICAL: Vercel Environment Variable (REQUIRED)
 
-If you still see errors related to `libnss3.so` or shared libraries, add this in Vercel Dashboard:
+**The Chromium binaries are NOT included by default. You MUST add this:**
 
 **Dashboard → Settings → Environment Variables**
+
+### Required Variable:
+
+- **Name:** `CHROMIUM_REMOTE_EXEC_PATH`
+- **Value:** `https://github.com/Sparticuz/chromium/releases/download/v141.0.0/chromium-v141.0.0-pack.tar.br`
+- **Apply to:** Production, Preview, Development
+
+**Why:** This tells @sparticuz/chromium to download the Chromium binary from GitHub releases instead of looking for it locally in `/var/task/node_modules/@sparticuz/chromium/bin`.
+
+### Optional Variable (for Node.js 22.x):
 
 - **Name:** `AWS_LAMBDA_JS_RUNTIME`
 - **Value:** `nodejs22.x`
