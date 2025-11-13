@@ -128,7 +128,7 @@ export default function QuestionsPage() {
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-gray-600">
-              Critical
+              Mandatory
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -174,7 +174,7 @@ export default function QuestionsPage() {
                       </Badge>
                       <Badge>{question.category.split(" ")[0]}</Badge>
                       {question.is_critical && (
-                        <Badge variant="destructive">CRITICAL</Badge>
+                        <Badge variant="destructive">MANDATORY</Badge>
                       )}
                       {!question.is_active && (
                         <Badge variant="secondary">Inactive</Badge>

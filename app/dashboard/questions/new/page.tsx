@@ -306,7 +306,7 @@ export default function NewQuestionPage() {
                 className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-2 focus:ring-ring cursor-pointer"
               />
               <Label htmlFor="is_critical" className="cursor-pointer flex items-center gap-2">
-                Mark as <Badge variant="destructive">CRITICAL</Badge> question
+                Mark as <Badge variant="destructive">MANDATORY</Badge> question
               </Label>
             </div>
           </CardContent>
@@ -469,7 +469,7 @@ export default function NewQuestionPage() {
                 <button
                   type="button"
                   className="text-gray-400 hover:text-gray-600"
-                  title="Higher weight = more impact on overall score. Standard = 1.0, Critical questions typically use 2.0"
+                  title="Higher weight = more impact on overall score. Standard = 1.0, Mandatory questions typically use 2.0"
                 >
                   <Info className="w-4 h-4" />
                 </button>
@@ -484,7 +484,7 @@ export default function NewQuestionPage() {
                 className="max-w-xs focus-visible:ring-2"
               />
               <p className="text-xs text-gray-500">
-                Range: 0.5 - 2.0 (Standard = 1.0, Critical = 2.0)
+                Range: 0.5 - 2.0 (Standard = 1.0, Mandatory = 2.0)
               </p>
               {errors.weight && (
                 <p className="text-sm text-red-600 flex items-center gap-1">
