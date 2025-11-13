@@ -117,8 +117,11 @@ export default function ReportPreviewPage() {
         
         console.log('[PDF] Data validation passed');
         
-        // Import complete generator and data transformer
-        const { generateCompletePDF } = await import('@/lib/pdf-client/generator');
+        // EXPERIMENT: Try @react-pdf/renderer now that questions are included
+        console.log('[PDF] Trying @react-pdf/renderer with complete data...');
+        
+        const { pdf } = await import('@react-pdf/renderer');
+        const ReportDocument = (await import('@/components/pdf/ReportDocument')).default;
         const { transformAuditToReportData } = await import('@/lib/pdf/formatters');
         
         console.log('[PDF] Transforming audit data to report format...');
@@ -131,15 +134,29 @@ export default function ReportPreviewPage() {
           auditData.scores
         );
         
-        console.log('[PDF] Generating complete PDF...');
+        console.log('[PDF] ReportData created, rendering @react-pdf document...');
         
-        // Generate complete PDF
-        const doc = await generateCompletePDF(reportData);
+        // Create React element
+        const element = React.createElement(ReportDocument, { data: reportData });
         
-        console.log('[PDF] Saving PDF...');
-        doc.save(`landlord-audit-report-${auditId}.pdf`);
+        console.log('[PDF] Generating blob with @react-pdf...');
         
-        console.log('[PDF] ✅ Complete client-side PDF generation succeeded!');
+        // Generate blob
+        const blob = await pdf(element).toBlob();
+        
+        console.log('[PDF] Blob generated, downloading...');
+        
+        // Download
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `landlord-audit-report-${auditId}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        console.log('[PDF] ✅ @react-pdf/renderer worked with complete data!');
       }
     } catch (error) {
       console.error("Download error:", error);
