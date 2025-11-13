@@ -1,37 +1,40 @@
 # Vercel PDF Generation Setup
 
-## ✅ What Was Fixed (Commit f2068d7)
+## ✅ What Was Fixed (Commit 5d5d866)
 
 ### 1. Next.js Configuration (`next.config.mjs`)
-Added `serverComponentsExternalPackages` to tell Next.js NOT to bundle Puppeteer/Chromium:
+Added `serverExternalPackages` to tell Next.js NOT to bundle Puppeteer/Chromium:
 
 ```javascript
-experimental: {
-  serverComponentsExternalPackages: ['puppeteer-core', '@sparticuz/chromium'],
-}
+serverExternalPackages: ['puppeteer-core', '@sparticuz/chromium'],
 ```
 
 **Why:** These packages need to run natively in Vercel's serverless environment, not bundled.
 
+**Note:** In Next.js 16+, this moved from `experimental.serverComponentsExternalPackages` to `serverExternalPackages` (root level).
+
 ### 2. Puppeteer Launch Configuration (`lib/pdf/puppeteer-generator.ts`)
-Changed from hardcoded values to @sparticuz/chromium optimized settings:
+Using @sparticuz/chromium for executable path and args:
 
 ```javascript
 browser = await puppeteer.launch({
-  args: chromium.args,                    // ✅ Optimized for serverless
-  defaultViewport: chromium.defaultViewport, // ✅ Optimized for serverless
-  executablePath: await chromium.executablePath(),
-  headless: chromium.headless,            // ✅ Optimized for serverless
+  args: chromium.args,                       // ✅ Serverless-optimized arguments
+  defaultViewport: { width: 1920, height: 1080 }, // Explicit viewport
+  executablePath: await chromium.executablePath(), // ✅ Chromium binary path
+  headless: true,                            // Explicit headless mode
 });
 ```
 
-**Why:** @sparticuz/chromium provides serverless-optimized configurations.
+**Why:** 
+- `chromium.args` provides serverless-optimized flags
+- `chromium.executablePath()` locates the Chromium binary in Vercel
+- Viewport and headless are set explicitly (chromium doesn't export these properties)
 
 ---
 
 ## 🧪 Testing
 
-After deployment `f2068d7` is live:
+After deployment `5d5d866` is live:
 
 1. Go to: `https://landlord-audit.vercel.app/dashboard/audit/17/report`
 2. Click "Download PDF"
