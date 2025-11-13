@@ -96,24 +96,42 @@ export default function ReportPreviewPage() {
           score: auditInfo.overallScore
         });
         
-        // Import client-side generator dynamically
-        const { pdf } = await import('@react-pdf/renderer');
-        const MinimalTestDocument = (await import('@/components/pdf/MinimalTestDocument')).default;
+        // Import PDF renderer
+        const { pdf, Document, Page, Text, View, StyleSheet } = await import('@react-pdf/renderer');
         
-        // Ensure all values are valid primitives
-        const pdfData = {
-          propertyAddress: String(auditInfo.propertyAddress || 'Unknown Property'),
-          landlordName: String(auditInfo.clientName || 'Unknown Landlord'),
-          overallScore: Number(auditInfo.overallScore) || 0,
-        };
+        console.log('[PDF] Dependencies loaded');
         
-        console.log('[PDF] Sanitized data:', pdfData);
+        // Define inline component to avoid dynamic import issues
+        const styles = StyleSheet.create({
+          page: { padding: 40 },
+          title: { fontSize: 24, marginBottom: 20, fontFamily: 'Helvetica-Bold' },
+          text: { fontSize: 12, marginBottom: 10 },
+        });
         
-        // Generate in browser
-        const doc = React.createElement(MinimalTestDocument, pdfData);
+        // Sanitized values
+        const property = String(auditInfo.propertyAddress || 'Unknown Property');
+        const landlord = String(auditInfo.clientName || 'Unknown Landlord');
+        const score = Number(auditInfo.overallScore) || 0;
+        
+        console.log('[PDF] Creating document with:', { property, landlord, score });
+        
+        // Create document directly with JSX-like structure
+        const doc = React.createElement(
+          Document,
+          null,
+          React.createElement(
+            Page,
+            { size: 'A4', style: styles.page },
+            React.createElement(Text, { style: styles.title }, 'Landlord Risk Audit Report'),
+            React.createElement(Text, { style: styles.text }, `Property: ${property}`),
+            React.createElement(Text, { style: styles.text }, `Landlord: ${landlord}`),
+            React.createElement(Text, { style: styles.text }, `Overall Score: ${score}/10`),
+            React.createElement(Text, { style: styles.text }, 'This is a minimal test PDF to verify Vercel compatibility.')
+          )
+        );
         
         console.log('[PDF] Document created, generating blob...');
-        const blob = await pdf(doc as any).toBlob();
+        const blob = await pdf(doc).toBlob();
         
         console.log('[PDF] Blob generated, downloading...');
         const url = URL.createObjectURL(blob);
