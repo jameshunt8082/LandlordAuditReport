@@ -82,26 +82,48 @@ export const ReportDocument = ({
         riskTier={String(data.riskTier)}
       />
       
-      {/* TEMPORARY: Testing ONLY CoverPage
-      <ExecutiveSummary data={data} reportId={reportId} criticalFindings={criticalFindings} />
-      <CriticalFindingsPage criticalQuestions={data.questionResponses.red} />
-      <MethodologyPage data={data} auditScope={auditScope} />
-      <RiskRatingPage />
-      <ComplianceStatusPage data={data} />
-      <EvidenceSummaryPage data={data} />
-      */}
+      {/* Executive Summary */}
+      <ExecutiveSummary
+        data={data}
+        reportId={reportId}
+        criticalFindings={criticalFindings}
+      />
       
-      {/* TEMPORARY: Commented out for debugging
+      {/* Critical Findings Summary (if critical items exist) */}
+      {data.questionResponses.red.length > 0 ? (
+        <CriticalFindingsPage criticalQuestions={data.questionResponses.red} />
+      ) : null}
+      
+      {/* Methodology & Scope */}
+      <MethodologyPage data={data} auditScope={auditScope} />
+      
+      {/* Risk Rating Definition */}
+      <RiskRatingPage />
+      
+      {/* Legal Compliance Status */}
+      <ComplianceStatusPage data={data} />
+      
+      {/* Evidence Summary */}
+      <EvidenceSummaryPage data={data} />
+      
+      {/* Introduction Pages */}
       <IntroductionPage />
+      
+      {/* Results Pages */}
       <ResultsPage data={data} />
+      
+      {/* Recommendations Pages */}
       <RecommendationsPage data={data} />
+      
+      {/* Action Plan with Timeline */}
       <ActionPlanPage data={data} />
+      
+      {/* Detailed Results Pages */}
       <DetailedResultsPage
         redQuestions={data.questionResponses.red}
         orangeQuestions={data.questionResponses.orange}
         greenQuestions={data.questionResponses.green}
       />
-      */}
     </Document>
   );
 };
