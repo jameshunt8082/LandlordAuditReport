@@ -124,10 +124,12 @@ export async function criticalFindings(doc: jsPDF, data: ReportData): Promise<vo
       doc.setFont('helvetica', 'normal');
       setTextColorHex(doc, COLORS.mediumGray);
       const categoryText = `${question.category} / ${question.subcategory}`;
-      const categoryWrapped = doc.splitTextToSize(categoryText, contentWidth - 40);
-      doc.text(categoryWrapped, startX + 45, cardYPos);
+      // Available width: contentWidth - card padding (8mm each side) - Q number space (30mm)
+      const categoryMaxWidth = contentWidth - 46;
+      const categoryWrapped = doc.splitTextToSize(categoryText, categoryMaxWidth);
+      doc.text(categoryWrapped, startX + 38, cardYPos);
       
-      cardYPos += Math.max(8, categoryWrapped.length * 3.5);
+      cardYPos += Math.max(10, categoryWrapped.length * 3.5);
       
       // Separator
       setDrawColorHex(doc, '#e5e7eb');
