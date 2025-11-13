@@ -59,32 +59,55 @@ export default function ReportPreviewPage() {
       setDownloading(true);
       setError("");
 
+      // Try SERVER-side first (will likely fail)
+      console.log('[PDF] Attempting server-side generation...');
       const response = await fetch(`/api/reports/${auditId}`);
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to generate report");
+      if (response.ok) {
+        // Server worked!
+        const contentDisposition = response.headers.get("Content-Disposition");
+        const filename = contentDisposition
+          ? contentDisposition.split("filename=")[1]?.replace(/"/g, "")
+          : `audit-report-${auditId}.pdf`;
+
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        setPdfUrl(url);
+        console.log('[PDF] ✅ Server-side generation worked!');
+      } else {
+        // Server failed, fallback to CLIENT-SIDE
+        console.log('[PDF] Server failed, using client-side generation...');
+        
+        // Import client-side generator dynamically
+        const { pdf } = await import('@react-pdf/renderer');
+        const MinimalTestDocument = (await import('@/components/pdf/MinimalTestDocument')).default;
+        
+        // Generate in browser
+        const doc = React.createElement(MinimalTestDocument, {
+          propertyAddress: auditInfo?.propertyAddress || 'Property',
+          landlordName: auditInfo?.clientName || 'Landlord',
+          overallScore: auditInfo?.overallScore || 0,
+        });
+        
+        const blob = await pdf(doc).toBlob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `audit-report-${auditId}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        console.log('[PDF] ✅ Client-side generation worked!');
       }
-
-      // Get filename from Content-Disposition header
-      const contentDisposition = response.headers.get("Content-Disposition");
-      const filename = contentDisposition
-        ? contentDisposition.split("filename=")[1]?.replace(/"/g, "")
-        : `audit-report-${auditId}.pdf`;
-
-      // Download the PDF
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-
-      // Also set for preview
-      setPdfUrl(url);
     } catch (error) {
       console.error("Download error:", error);
       setError((error as Error).message);
