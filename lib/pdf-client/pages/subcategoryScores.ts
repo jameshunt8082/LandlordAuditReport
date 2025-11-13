@@ -52,8 +52,8 @@ export async function subcategoryScores(doc: jsPDF, data: ReportData): Promise<v
   categories.forEach((category, catIdx) => {
     if (category.subcats.length === 0) return;
     
-    // Category header
-    yPos = addNewPageIfNeeded(doc, yPos, 15 + (category.subcats.length * 12));
+    // Category header (check if we have space for at least header + 2 bars)
+    yPos = addNewPageIfNeeded(doc, yPos, 20 + (Math.min(2, category.subcats.length) * 10));
     
     doc.setFontSize(FONTS.h3.size);
     doc.setFont('helvetica', FONTS.h3.style);
@@ -63,19 +63,32 @@ export async function subcategoryScores(doc: jsPDF, data: ReportData): Promise<v
     
     // Draw bars for each subcategory
     category.subcats.forEach((subcat, idx) => {
-      const barX = startX + 5;
+      // Check if we need a new page (bar + spacing + footer margin)
+      yPos = addNewPageIfNeeded(doc, yPos, 15);
+      
+      const labelWidth = 65; // Fixed width for subcategory name
+      const barX = startX + 5 + labelWidth;
       const barHeight = 6;
-      const maxBarWidth = (contentWidth - 10) - 40; // Reserve space for score label
+      const maxBarWidth = (contentWidth - 10) - labelWidth - 15; // Reserve space for label and score
       const barWidth = (subcat.score / 10) * maxBarWidth;
       
-      // Subcategory name above bar
-      doc.setFontSize(10);
+      // Subcategory name (left side, aligned with bar)
+      doc.setFontSize(9);
       doc.setFont('helvetica', 'normal');
       const [rBlack, gBlack, bBlack] = hexToRgb(COLORS.black);
       doc.setTextColor(rBlack, gBlack, bBlack);
-      const subcatName = subcat.name.length > 50 ? subcat.name.substring(0, 47) + '...' : subcat.name;
-      doc.text(subcatName, barX, yPos);
-      yPos += 5;
+      
+      // Truncate if too long
+      const subcatName = subcat.name.length > 30 ? subcat.name.substring(0, 27) + '...' : subcat.name;
+      
+      // Wrap to max 2 lines if needed
+      const wrapped = doc.splitTextToSize(subcatName, labelWidth - 2);
+      const textLines = wrapped.slice(0, 2); // Max 2 lines
+      
+      // Draw text aligned with bar vertically
+      textLines.forEach((line: string, lineIdx: number) => {
+        doc.text(line, startX + 5, yPos + 3 + (lineIdx * 3.5));
+      });
       
       // Filled bar (colored portion)
       const barColor = COLORS[subcat.color];
@@ -89,16 +102,16 @@ export async function subcategoryScores(doc: jsPDF, data: ReportData): Promise<v
       doc.setLineWidth(0.1);
       doc.roundedRect(barX, yPos, maxBarWidth, barHeight, 1, 1, 'S');
       
-      // Score label at the end of bar
+      // Score label at the end of bar (aligned vertically with bar)
       doc.setFontSize(10);
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(rBlack, gBlack, bBlack);
-      doc.text(subcat.score.toFixed(1), barX + maxBarWidth + 3, yPos + 4.5);
+      doc.text(subcat.score.toFixed(1), barX + maxBarWidth + 2, yPos + 4.5);
       
-      yPos += barHeight + 6;
+      yPos += barHeight + 4;
     });
     
-    yPos += 10; // Space between categories
+    yPos += 8; // Space between categories
   });
   
   addPageFooter(doc);
