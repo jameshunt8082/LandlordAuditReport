@@ -6,46 +6,6 @@ import { addNewPageIfNeeded } from '../utils';
 import { addPageHeader } from '../components/header';
 import { addPageFooter } from '../components/footer';
 
-/**
- * Draw a horizontal bar chart for a subcategory
- */
-function drawHorizontalBar(
-  doc: jsPDF,
-  x: number,
-  y: number,
-  width: number,
-  score: number,
-  color: 'red' | 'orange' | 'green'
-): number {
-  const barHeight = 6;
-  const maxBarWidth = width - 40; // Reserve space for score label
-  const barWidth = (score / 10) * maxBarWidth;
-  
-  // Bar color (set directly with RGB)
-  const barColor = COLORS[color];
-  const [r, g, b] = hexToRgb(barColor);
-  doc.setFillColor(r, g, b);
-  doc.roundedRect(x, y, barWidth, barHeight, 1, 1, 'F');
-  
-  // Bar outline
-  const [rGray, gGray, bGray] = hexToRgb(COLORS.lightGray);
-  doc.setDrawColor(rGray, gGray, bGray);
-  doc.setLineWidth(0.1);
-  doc.roundedRect(x, y, maxBarWidth, barHeight, 1, 1, 'S');
-  
-  // Score label at the end of bar
-  doc.setFontSize(10);
-  doc.setFont('helvetica', 'bold');
-  const [rBlack, gBlack, bBlack] = hexToRgb(COLORS.black);
-  doc.setTextColor(rBlack, gBlack, bBlack);
-  doc.text(score.toFixed(1), x + maxBarWidth + 3, y + 4.5);
-  
-  // Subcategory name on the left (already set text color above)
-  doc.setFontSize(10);
-  doc.setFont('helvetica', 'normal');
-  
-  return y + barHeight + 6; // Return next Y position
-}
 
 /**
  * Generate Subcategory Scores Page with Bar Charts
@@ -103,23 +63,39 @@ export async function subcategoryScores(doc: jsPDF, data: ReportData): Promise<v
     
     // Draw bars for each subcategory
     category.subcats.forEach((subcat, idx) => {
-      // Subcategory name
+      const barX = startX + 5;
+      const barHeight = 6;
+      const maxBarWidth = (contentWidth - 10) - 40; // Reserve space for score label
+      const barWidth = (subcat.score / 10) * maxBarWidth;
+      
+      // Subcategory name above bar
       doc.setFontSize(10);
       doc.setFont('helvetica', 'normal');
-      setTextColorHex(doc, COLORS.black);
+      const [rBlack, gBlack, bBlack] = hexToRgb(COLORS.black);
+      doc.setTextColor(rBlack, gBlack, bBlack);
       const subcatName = subcat.name.length > 50 ? subcat.name.substring(0, 47) + '...' : subcat.name;
-      doc.text(subcatName, startX + 5, yPos);
+      doc.text(subcatName, barX, yPos);
       yPos += 5;
       
-      // Bar chart
-      yPos = drawHorizontalBar(
-        startX + 5,
-        yPos,
-        contentWidth - 10,
-        subcat.score,
-        subcat.color,
-        subcat.name
-      );
+      // Filled bar (colored portion)
+      const barColor = COLORS[subcat.color];
+      const [r, g, b] = hexToRgb(barColor);
+      doc.setFillColor(r, g, b);
+      doc.roundedRect(barX, yPos, barWidth, barHeight, 1, 1, 'F');
+      
+      // Bar outline (full scale)
+      const [rGray, gGray, bGray] = hexToRgb(COLORS.lightGray);
+      doc.setDrawColor(rGray, gGray, bGray);
+      doc.setLineWidth(0.1);
+      doc.roundedRect(barX, yPos, maxBarWidth, barHeight, 1, 1, 'S');
+      
+      // Score label at the end of bar
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(rBlack, gBlack, bBlack);
+      doc.text(subcat.score.toFixed(1), barX + maxBarWidth + 3, yPos + 4.5);
+      
+      yPos += barHeight + 6;
     });
     
     yPos += 10; // Space between categories
