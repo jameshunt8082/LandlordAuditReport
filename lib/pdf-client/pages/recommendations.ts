@@ -174,9 +174,33 @@ function generateSuggestion(subcat: SubcategoryScore, data: ReportData): string 
         ex => ex.score_level === scoreLevel
       );
       
-      if (matchingExample && matchingExample.reason_text) {
-        // Use reason_text from Scoring Guidance
-        return matchingExample.reason_text;
+      if (matchingExample) {
+        // Combine reason_text and report_action from Scoring Guidance
+        const parts: string[] = [];
+        
+        // Add reason text if available
+        if (matchingExample.reason_text && matchingExample.reason_text.trim()) {
+          // Determine label based on score level
+          let reasonLabel = '';
+          if (scoreLevel === 'low') {
+            reasonLabel = 'Reasons for low score';
+          } else if (scoreLevel === 'medium') {
+            reasonLabel = 'Reasons for medium score';
+          } else {
+            reasonLabel = 'Reasons for high score';
+          }
+          parts.push(`${reasonLabel}: ${matchingExample.reason_text}`);
+        }
+        
+        // Add action to take if available
+        if (matchingExample.report_action && matchingExample.report_action.trim()) {
+          parts.push(`Action to take: ${matchingExample.report_action}`);
+        }
+        
+        // Return combined text
+        if (parts.length > 0) {
+          return parts.join(' ');
+        }
       }
     }
   }
