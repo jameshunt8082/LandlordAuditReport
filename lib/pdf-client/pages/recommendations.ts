@@ -178,7 +178,18 @@ function getReasonForLowScore(question: QuestionResponseData): string {
       ex => ex.score_level === scoreLevel
     );
     
-    if (matchingExample && matchingExample.reason_text) {
+    // Debug logging
+    if (question.number === '1.2') {
+      console.log('[PDF] Q1.2 reason_text check:', {
+        scoreLevel,
+        hasMatchingExample: !!matchingExample,
+        matchingExample,
+        hasReasonText: matchingExample?.reason_text ? true : false,
+        reasonTextLength: matchingExample?.reason_text?.length || 0
+      });
+    }
+    
+    if (matchingExample && matchingExample.reason_text && matchingExample.reason_text.trim()) {
       return matchingExample.reason_text.trim();
     }
   }
@@ -214,7 +225,18 @@ function getRecommendedAction(question: QuestionResponseData, data?: ReportData)
       ex => ex.score_level === scoreLevel
     );
     
-    if (matchingExample && matchingExample.report_action) {
+    // Debug logging
+    if (question.number === '1.2') {
+      console.log('[PDF] Q1.2 report_action check:', {
+        scoreLevel,
+        hasMatchingExample: !!matchingExample,
+        matchingExample,
+        hasReportAction: matchingExample?.report_action ? true : false,
+        reportActionLength: matchingExample?.report_action?.length || 0
+      });
+    }
+    
+    if (matchingExample && matchingExample.report_action && matchingExample.report_action.trim()) {
       return matchingExample.report_action.trim();
     }
   }
