@@ -26,16 +26,22 @@ export async function recommendations(doc: jsPDF, data: ReportData): Promise<voi
   doc.setFont('helvetica', FONTS.h1.style);
   setTextColorHex(doc, COLORS.primaryGreen);
   doc.text('Recommended Actions', startX, yPos);
-  yPos += 15;
+  yPos += 12;
   
-  // Remove subtitle to avoid duplication with next page title
+  // Subtitle
+  doc.setFontSize(FONTS.h2.size);
+  doc.setFont('helvetica', FONTS.h2.style);
+  setTextColorHex(doc, COLORS.blue);
+  doc.text('Suggestions for Improvement', startX, yPos);
+  yPos += 15;
   
   // Introductory text
   doc.setFontSize(FONTS.body.size);
   doc.setFont('helvetica', 'normal');
   setTextColorHex(doc, COLORS.black);
   
-  const intro1 = 'The following factors that were in the red score zones require your attention. We have suggestions for improvements that you could action.';
+  // Introductory text about red/orange scores
+  const intro1 = 'The following factors that were in the red or orange score zones require your attention. We have suggestions for improvements that you could action.';
   const wrapped1 = doc.splitTextToSize(intro1, contentWidth);
   doc.text(wrapped1, startX, yPos);
   yPos += wrapped1.length * 4 + 8;

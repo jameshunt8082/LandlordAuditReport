@@ -77,13 +77,14 @@ export async function generateCompletePDF(data: ReportData): Promise<jsPDF> {
     console.log('[PDF Generator] Generating subcategory scores...');
     await subcategoryScores(doc, data);
     
-    // Recommended Actions (tables grouped by category)
+    // Recommended Actions (Opción A: 3 tables by category, no timeline structure)
     console.log('[PDF Generator] Generating recommended actions...');
     await recommendations(doc, data);
     
-    // Suggestions for Improvement (timeline with CRITICAL and SHORT-TERM)
-    console.log('[PDF Generator] Generating suggestions for improvement...');
-    await actionPlan(doc, data);
+    // REMOVED PER JAMES FEEDBACK (Opción A): Timeline structure removed
+    // The "Suggestions for Improvement" subtitle is now part of Recommended Actions page
+    // console.log('[PDF Generator] Generating suggestions for improvement...');
+    // await actionPlan(doc, data);
     
     // Detailed Results
     console.log('[PDF Generator] Generating detailed results...');
