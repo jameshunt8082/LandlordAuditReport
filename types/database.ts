@@ -47,7 +47,7 @@ export interface Note {
   id: number;
   audit_id: number;
   auditor_id: number;
-  question_id: string | null;
+  question_id: string;
   content: string;
   created_at: Date;
 }
