@@ -300,6 +300,30 @@ function AuditFormContent({
     }
   };
 
+  // Handle cancel and start again
+  const handleCancelAndStartAgain = () => {
+    if (window.confirm("Are you sure you want to cancel and start again? All your answers will be cleared.")) {
+      // Clear form
+      const defaultValues = Object.fromEntries(
+        relevantQuestions.map(q => [`q_${q.id.replace(/\./g, '_')}`, undefined])
+      );
+      reset(defaultValues as any, { keepDirty: false });
+      
+      // Clear localStorage
+      const storageKey = `audit-form-${audit.token}`;
+      localStorage.removeItem(storageKey);
+      
+      // Clear error
+      setError("");
+      
+      // Reset to first section
+      setCurrentCategory(0);
+      
+      // Scroll to top
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
+
   // Submit handler with enhanced validation
   const onSubmit = async (data: ActualFormData) => {
     setError("");
@@ -594,6 +618,19 @@ function AuditFormContent({
                     {submitting ? "Submitting..." : "Submit Audit"}
                   </Button>
                 )}
+              </div>
+
+              {/* Cancel & Start Again Button */}
+              <div className="mt-4 pt-4 border-t">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleCancelAndStartAgain}
+                  className="w-full text-red-600 hover:text-red-700 hover:bg-red-50"
+                  disabled={submitting}
+                >
+                  Cancel & Start Again
+                </Button>
               </div>
 
               {progress < 100 && currentCategory === categories.length - 1 && (
