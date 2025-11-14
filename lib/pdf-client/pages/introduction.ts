@@ -84,32 +84,6 @@ export async function introduction(doc: jsPDF, data: ReportData): Promise<void> 
   const greenText = 'Well-managed areas demonstrating good compliance practices.';
   const greenWrapped = doc.splitTextToSize(greenText, contentWidth - 15);
   doc.text(greenWrapped, startX + 15, yPos + 5);
-  yPos += greenWrapped.length * 4 + 20;
-  
-  // How to use this report section
-  doc.setFontSize(FONTS.h2.size);
-  doc.setFont('helvetica', 'bold');
-  setTextColorHex(doc, COLORS.black);
-  doc.text('How to Use This Report', startX, yPos);
-  yPos += 12;
-  
-  doc.setFontSize(FONTS.body.size);
-  doc.setFont('helvetica', 'normal');
-  
-  const steps = [
-    'Review the Executive Summary for an overview of your compliance status',
-    'Address all Critical Findings (red items) within 7 days to avoid legal penalties',
-    'Implement the Priority Action Plan for medium-term improvements',
-    'Use the Detailed Results section to understand specific compliance gaps',
-    'Consider the recommended follow-on services for professional assistance',
-  ];
-  
-  steps.forEach((step, idx) => {
-    const stepText = `${idx + 1}. ${step}`;
-    const stepWrapped = doc.splitTextToSize(stepText, contentWidth - 10);
-    doc.text(stepWrapped, startX + 5, yPos);
-    yPos += stepWrapped.length * 4 + 5;
-  });
   
   addPageFooter(doc);
 }

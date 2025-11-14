@@ -39,7 +39,11 @@ export async function generateCompletePDF(data: ReportData): Promise<jsPDF> {
     console.log('[PDF Generator] Generating cover page...');
     await coverPage(doc, data);
     
-    // Page 2: Audit Scope (simplified - removed full methodology per James feedback)
+    // Page 2: Introduction (moved to beginning per James feedback, removed "How to Use" section)
+    console.log('[PDF Generator] Generating introduction...');
+    await introduction(doc, data);
+    
+    // Page 3: Audit Scope (simplified - removed full methodology per James feedback)
     console.log('[PDF Generator] Generating audit scope...');
     await auditScope(doc, data);
     
@@ -64,10 +68,6 @@ export async function generateCompletePDF(data: ReportData): Promise<jsPDF> {
     // Evidence Summary
     console.log('[PDF Generator] Generating evidence summary...');
     await evidenceSummary(doc, data);
-    
-    // Introduction
-    console.log('[PDF Generator] Generating introduction...');
-    await introduction(doc, data);
     
     // Results
     console.log('[PDF Generator] Generating results...');
