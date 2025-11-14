@@ -48,9 +48,15 @@ export async function GET(
       const questionsResponse = await fetch(
         `${process.env.NEXTAUTH_URL}/api/questions/for-tier/${audit.risk_audit_tier}`
       );
-      const questionsData = await questionsResponse.json();
-      questionsForScoring = questionsData.questions || getQuestionsByTier(audit.risk_audit_tier);
-    } catch (error) {
+      if (!questionsResponse.ok) {
+        console.warn(`Failed to fetch questions from API: ${questionsResponse.status}`);
+        questionsForScoring = getQuestionsByTier(audit.risk_audit_tier);
+      } else {
+        const questionsData = await questionsResponse.json();
+        questionsForScoring = questionsData.questions || getQuestionsByTier(audit.risk_audit_tier);
+      }
+    } catch (error: any) {
+      console.warn("Error fetching questions from API, using fallback:", error?.message);
       // Fallback to static questions
       questionsForScoring = getQuestionsByTier(audit.risk_audit_tier);
     }
@@ -58,25 +64,40 @@ export async function GET(
     // Calculate scores if responses exist
     let scores = null;
     if (responses.length > 0) {
-      scores = calculateAuditScores(responses as any, questionsForScoring);
+      try {
+        scores = calculateAuditScores(responses as any, questionsForScoring);
 
-      // Save scores to database
-      for (const categoryScore of scores.categoryScores) {
-        await sql`
-          INSERT INTO scores (audit_id, scores_category, score, created_at)
-          VALUES (${auditId}, ${categoryScore.category}, ${categoryScore.score}, NOW())
-          ON CONFLICT (audit_id, scores_category)
-          DO UPDATE SET score = ${categoryScore.score}
-        `;
+        // Save scores to database
+        for (const categoryScore of scores.categoryScores) {
+          try {
+            await sql`
+              INSERT INTO scores (audit_id, scores_category, score, created_at)
+              VALUES (${auditId}, ${categoryScore.category}, ${categoryScore.score}, NOW())
+              ON CONFLICT (audit_id, scores_category)
+              DO UPDATE SET score = ${categoryScore.score}
+            `;
+          } catch (scoreError: any) {
+            console.error(`Error saving score for category ${categoryScore.category}:`, scoreError?.message);
+            // Continue with other scores even if one fails
+          }
+        }
+
+        // Also save overall score
+        try {
+          await sql`
+            INSERT INTO scores (audit_id, scores_category, score, created_at)
+            VALUES (${auditId}, 'Overall', ${scores.overallScore.score}, NOW())
+            ON CONFLICT (audit_id, scores_category)
+            DO UPDATE SET score = ${scores.overallScore.score}
+          `;
+        } catch (overallScoreError: any) {
+          console.error("Error saving overall score:", overallScoreError?.message);
+          // Continue even if overall score save fails
+        }
+      } catch (scoringError: any) {
+        console.error("Error calculating scores:", scoringError?.message);
+        // Don't fail the entire request if scoring fails
       }
-
-      // Also save overall score
-      await sql`
-        INSERT INTO scores (audit_id, scores_category, score, created_at)
-        VALUES (${auditId}, 'Overall', ${scores.overallScore.score}, NOW())
-        ON CONFLICT (audit_id, scores_category)
-        DO UPDATE SET score = ${scores.overallScore.score}
-      `;
     }
 
     // Get notes
@@ -93,10 +114,18 @@ export async function GET(
       scores,
       notes: notesResult.rows,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Get audit review error:", error);
+    console.error("Error details:", {
+      message: error?.message,
+      stack: error?.stack,
+      auditId: id,
+    });
     return NextResponse.json(
-      { error: "Internal server error" },
+      { 
+        error: "Internal server error",
+        details: process.env.NODE_ENV === "development" ? error?.message : undefined
+      },
       { status: 500 }
     );
   }
