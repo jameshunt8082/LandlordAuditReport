@@ -140,21 +140,8 @@ function AuditFormContent({
   const currentCategoryName = categories[currentCategory];
   const currentQuestions = groupedQuestions[currentCategoryName] || [];
 
-  // Calculate progress
-  const allValues = watch();
-  const { answeredCount, progress } = useMemo(() => {
-    const answered = relevantQuestions.filter((q) => {
-      const safeKey = `q_${q.id.replace(/\./g, '_')}`;
-      const value = allValues[safeKey as keyof ActualFormData];
-      return value === 1 || value === 5 || value === 10;
-    }).length;
-    const total = relevantQuestions.length;
-    const prog = total > 0 ? (answered / total) * 100 : 0;
-    return { answeredCount: answered, progress: prog };
-  }, [allValues, relevantQuestions]);
-
   // Helper function to scroll to first unanswered question in a category
-  const scrollToFirstUnanswered = (categoryQuestions: Question[]) => {
+  const scrollToFirstUnanswered = (categoryQuestions: Question[], allValues: ActualFormData) => {
     const firstUnanswered = categoryQuestions.find((q) => {
       const safeKey = `q_${q.id.replace(/\./g, '_')}`;
       const value = allValues[safeKey as keyof ActualFormData];
@@ -298,6 +285,19 @@ function AuditFormContent({
     return () => subscription.unsubscribe();
   }, [audit.token, watch]);
 
+  // Calculate progress
+  const allValues = watch();
+  const { answeredCount, progress } = useMemo(() => {
+    const answered = relevantQuestions.filter((q) => {
+      const safeKey = `q_${q.id.replace(/\./g, '_')}`;
+      const value = allValues[safeKey as keyof ActualFormData];
+      return value === 1 || value === 5 || value === 10;
+    }).length;
+    const total = relevantQuestions.length;
+    const prog = total > 0 ? (answered / total) * 100 : 0;
+    return { answeredCount: answered, progress: prog };
+  }, [allValues, relevantQuestions]);
+
   // Scroll spy: detect which question is currently in view
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -328,19 +328,6 @@ function AuditFormContent({
       });
     };
   }, [currentQuestions]);
-
-  // Calculate progress
-  const allValues = watch();
-  const { answeredCount, progress } = useMemo(() => {
-    const answered = relevantQuestions.filter((q) => {
-      const safeKey = `q_${q.id.replace(/\./g, '_')}`;
-      const value = allValues[safeKey as keyof ActualFormData];
-      return value === 1 || value === 5 || value === 10;
-    }).length;
-    const total = relevantQuestions.length;
-    const prog = total > 0 ? (answered / total) * 100 : 0;
-    return { answeredCount: answered, progress: prog };
-  }, [allValues, relevantQuestions]);
   
   const totalQuestions = relevantQuestions.length;
 
@@ -814,7 +801,7 @@ function AuditFormContent({
                     setTimeout(() => {
                       const prevCategoryName = categories[prevCategory];
                       const prevQuestions = groupedQuestions[prevCategoryName] || [];
-                      scrollToFirstUnanswered(prevQuestions);
+                      scrollToFirstUnanswered(prevQuestions, allValues);
                     }, 200);
                   }}
                   disabled={currentCategory === 0}
