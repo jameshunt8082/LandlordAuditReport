@@ -11,7 +11,7 @@ import { auditScope } from './pages/auditScope';
 // import { complianceStatus } from './pages/complianceStatus'; // REMOVED
 import { evidenceSummary } from './pages/evidenceSummary';
 import { introduction } from './pages/introduction';
-import { results } from './pages/results';
+// import { results } from './pages/results'; // REMOVED (Category Scores table)
 import { subcategoryScores } from './pages/subcategoryScores';
 import { recommendations } from './pages/recommendations';
 import { actionPlan } from './pages/actionPlan';
@@ -69,9 +69,9 @@ export async function generateCompletePDF(data: ReportData): Promise<jsPDF> {
     console.log('[PDF Generator] Generating evidence summary...');
     await evidenceSummary(doc, data);
     
-    // Results
-    console.log('[PDF Generator] Generating results...');
-    await results(doc, data);
+    // REMOVED PER JAMES FEEDBACK: Category Scores table (no longer needed)
+    // console.log('[PDF Generator] Generating results...');
+    // await results(doc, data);
     
     // Subcategory Scores (Bar Charts)
     console.log('[PDF Generator] Generating subcategory scores...');
