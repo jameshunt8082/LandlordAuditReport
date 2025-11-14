@@ -132,6 +132,7 @@ function AuditFormContent({
   const [showSavedToast, setShowSavedToast] = useState(false);
   const lastSavedRef = useRef<number>(0);
   const questionRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const shouldScrollRef = useRef<boolean>(false);
 
   // Use questions from database (passed as props)
   const relevantQuestions = questions;
@@ -169,9 +170,9 @@ function AuditFormContent({
     }
   };
 
-  // Scroll to first question when section changes
+  // Scroll to first question when section changes (only when category actually changes)
   useEffect(() => {
-    if (currentQuestions.length > 0) {
+    if (shouldScrollRef.current && currentQuestions.length > 0) {
       // Small delay to ensure DOM is updated
       setTimeout(() => {
         const firstQuestionId = currentQuestions[0].id;
@@ -192,6 +193,8 @@ function AuditFormContent({
           }
         }
       }, 100);
+      // Reset the flag after scrolling
+      shouldScrollRef.current = false;
     }
   }, [currentCategory, currentQuestions]);
 
@@ -643,7 +646,10 @@ function AuditFormContent({
                       key={category}
                       type="button"
                       variant={currentCategory === index ? "default" : "outline"}
-                      onClick={() => setCurrentCategory(index)}
+                      onClick={() => {
+                        shouldScrollRef.current = true;
+                        setCurrentCategory(index);
+                      }}
                       size="sm"
                       className="relative"
                     >
@@ -796,6 +802,7 @@ function AuditFormContent({
                   variant="outline"
                   onClick={() => {
                     const prevCategory = Math.max(0, currentCategory - 1);
+                    shouldScrollRef.current = true;
                     setCurrentCategory(prevCategory);
                     // Scroll to first unanswered question in previous section
                     setTimeout(() => {
@@ -813,6 +820,7 @@ function AuditFormContent({
                   <Button
                     type="button"
                     onClick={() => {
+                      shouldScrollRef.current = true;
                       setCurrentCategory(currentCategory + 1);
                     }}
                   >
