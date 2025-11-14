@@ -134,28 +134,7 @@ export async function recommendations(doc: jsPDF, data: ReportData): Promise<voi
     doc.setFont('helvetica', 'italic');
     setTextColorHex(doc, COLORS.mediumGray);
     doc.text('No immediate service recommendations - compliance is generally strong.', startX, yPos);
-    yPos += 15;
   }
-  
-  // Follow-on Products and Services subsection (placeholder text per James feedback)
-  yPos = addNewPageIfNeeded(doc, yPos, 50);
-  yPos += 10;
-  
-  doc.setFontSize(FONTS.h2.size);
-  doc.setFont('helvetica', FONTS.h2.style);
-  setTextColorHex(doc, COLORS.blue);
-  doc.text('Follow-on Products and Services', startX, yPos);
-  yPos += 15;
-  
-  doc.setFontSize(FONTS.body.size);
-  doc.setFont('helvetica', 'normal');
-  setTextColorHex(doc, COLORS.black);
-  
-  // Placeholder text (lipsum) - will be updated later per James feedback
-  const followOnText = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo.';
-  const wrappedFollowOn = doc.splitTextToSize(followOnText, contentWidth);
-  doc.text(wrappedFollowOn, startX, yPos);
-  yPos += wrappedFollowOn.length * 4 + 10;
   
   addPageFooter(doc);
 }
