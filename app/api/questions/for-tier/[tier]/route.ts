@@ -19,7 +19,7 @@ export async function GET(
       );
     }
 
-    // Get questions with answer options for this tier
+    // Get questions with answer options and score examples for this tier
     console.log('📋 Fetching questions from DB...');
     const result = await sql`
       SELECT 
@@ -36,13 +36,21 @@ export async function GET(
         qt.orange_score_example,
         qt.report_action,
         json_agg(
-          jsonb_build_object(
+          DISTINCT jsonb_build_object(
             'value', qao.score_value,
             'label', qao.option_text
           ) ORDER BY qao.option_order
-        ) FILTER (WHERE qao.id IS NOT NULL AND qao.is_example = FALSE) as options
+        ) FILTER (WHERE qao.id IS NOT NULL AND qao.is_example = FALSE) as options,
+        json_agg(
+          DISTINCT jsonb_build_object(
+            'score_level', qse.score_level,
+            'reason_text', qse.reason_text,
+            'report_action', qse.report_action
+          ) ORDER BY qse.score_level
+        ) FILTER (WHERE qse.id IS NOT NULL) as score_examples
       FROM question_templates qt
       LEFT JOIN question_answer_options qao ON qt.id = qao.question_template_id
+      LEFT JOIN question_score_examples qse ON qt.id = qse.question_template_id
       WHERE qt.is_active = TRUE
         AND qt.applicable_tiers @> ${JSON.stringify([tier])}::jsonb
       GROUP BY qt.id
@@ -71,6 +79,7 @@ export async function GET(
       red_score_example: row.red_score_example,
       orange_score_example: row.orange_score_example,
       report_action: row.report_action,
+      score_examples: row.score_examples || [],
     }));
 
     console.log('✅ Returning', questions.length, 'questions\n');

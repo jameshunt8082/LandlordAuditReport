@@ -34,6 +34,12 @@ export interface QuestionResponseData {
   red_score_example?: string | null;
   orange_score_example?: string | null;
   report_action?: string | null;
+  // Scoring guidance from Edit Questions
+  score_examples?: Array<{
+    score_level: 'low' | 'medium' | 'high';
+    reason_text: string;
+    report_action?: string | null;
+  }>;
 }
 
 export interface ServiceRecommendation {
@@ -333,18 +339,19 @@ function sortQuestionResponses(
       const fallbackAnswer = `Score: ${response.answer_value}`;
       const color = getTrafficLightColor(response.answer_value);
       
-      const questionData: QuestionResponseData = {
-        number: question.id,
-        category: question.category || 'Unknown',
-        subcategory: question.section || 'Unknown',
-        questionText: question.text || 'Question text not available',
-        answer: fallbackAnswer,
-        score: response.answer_value,
-        color,
-        red_score_example: question.red_score_example,
-        orange_score_example: question.orange_score_example,
-        report_action: question.report_action,
-      };
+    const questionData: QuestionResponseData = {
+      number: question.id,
+      category: question.category || 'Unknown',
+      subcategory: question.section || 'Unknown',
+      questionText: question.text || 'Question text not available',
+      answer: fallbackAnswer,
+      score: response.answer_value,
+      color,
+      red_score_example: question.red_score_example,
+      orange_score_example: question.orange_score_example,
+      report_action: question.report_action,
+      score_examples: question.score_examples,
+    };
       
       sorted[color].push(questionData);
       return;
@@ -363,6 +370,7 @@ function sortQuestionResponses(
       red_score_example: question.red_score_example,
       orange_score_example: question.orange_score_example,
       report_action: question.report_action,
+      score_examples: question.score_examples,
     };
     
     sorted[color].push(questionData);

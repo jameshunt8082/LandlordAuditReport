@@ -135,7 +135,7 @@ export async function recommendations(doc: jsPDF, data: ReportData): Promise<voi
 
 /**
  * Generate suggestion text based on subcategory score
- * Uses rich data from CSV import (report_action, red_score_example, orange_score_example)
+ * Uses Scoring Guidance (reason_text) from Edit Questions based on the actual answer score
  */
 function generateSuggestion(subcat: SubcategoryScore, data: ReportData): string {
   // Find questions for this subcategory (across all color groups)
@@ -149,15 +149,45 @@ function generateSuggestion(subcat: SubcategoryScore, data: ReportData): string 
     q => q.subcategory === subcat.name && q.category === subcat.category
   );
   
-  // Find the first question with report_action data
-  const questionWithAction = subcatQuestions.find(q => q.report_action);
+  // Find questions with score_examples (Scoring Guidance)
+  // Use the question with the worst score (lowest) to get the most relevant guidance
+  // Sort by score (lowest first) to prioritize worst-scoring questions
+  const questionsWithGuidance = subcatQuestions
+    .filter(q => q.score_examples && q.score_examples.length > 0)
+    .sort((a, b) => a.score - b.score); // Sort by score ascending (worst first)
   
+  for (const question of questionsWithGuidance) {
+    if (question.score_examples && question.score_examples.length > 0) {
+      // Map answer score to score_level
+      // score 1 = 'low', score 5 = 'medium', score 10 = 'high'
+      let scoreLevel: 'low' | 'medium' | 'high';
+      if (question.score === 1) {
+        scoreLevel = 'low';
+      } else if (question.score === 5) {
+        scoreLevel = 'medium';
+      } else {
+        scoreLevel = 'high';
+      }
+      
+      // Find the matching score_example
+      const matchingExample = question.score_examples.find(
+        ex => ex.score_level === scoreLevel
+      );
+      
+      if (matchingExample && matchingExample.reason_text) {
+        // Use reason_text from Scoring Guidance
+        return matchingExample.reason_text;
+      }
+    }
+  }
+  
+  // Fallback 1: Try using CSV data (report_action, red_score_example, orange_score_example)
+  const questionWithAction = subcatQuestions.find(q => q.report_action);
   if (questionWithAction && questionWithAction.report_action) {
-    // Use specific action from CSV
     return questionWithAction.report_action;
   }
   
-  // Try using score-specific examples
+  // Fallback 2: Try using score-specific examples from CSV
   if (subcat.color === 'red') {
     const questionWithRedExample = subcatQuestions.find(q => q.red_score_example);
     if (questionWithRedExample && questionWithRedExample.red_score_example) {
@@ -170,7 +200,7 @@ function generateSuggestion(subcat: SubcategoryScore, data: ReportData): string 
     }
   }
   
-  // Fallback: Check suggested services
+  // Fallback 3: Check suggested services
   const service = data.suggestedServices.find(
     s => s.lowScoringArea.toLowerCase().includes(subcat.name.toLowerCase())
   );

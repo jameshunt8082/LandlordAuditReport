@@ -18,6 +18,12 @@ export interface Question {
   red_score_example?: string | null;
   orange_score_example?: string | null;
   report_action?: string | null;
+  // Scoring guidance from Edit Questions
+  score_examples?: Array<{
+    score_level: 'low' | 'medium' | 'high';
+    reason_text: string;
+    report_action?: string | null;
+  }>;
 }
 
 export const CATEGORIES = {
