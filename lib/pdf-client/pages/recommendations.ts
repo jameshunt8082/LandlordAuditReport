@@ -85,12 +85,23 @@ export async function recommendations(doc: jsPDF, data: ReportData): Promise<voi
       const reasonText = getReasonForLowScore(question);
       const recommendedAction = getRecommendedAction(question);
       
+      // Debug logging (can remove later)
+      if (!reasonText || !recommendedAction) {
+        console.log(`[PDF Recommendations] Missing data for Q${question.number}:`, {
+          hasScoreExamples: !!question.score_examples,
+          scoreExamplesLength: question.score_examples?.length || 0,
+          score: question.score,
+          reasonText,
+          recommendedAction,
+        });
+      }
+      
       return [
         '', // Status column - will be drawn with traffic light
         question.subcategory || '',
         question.questionText || '',
-        reasonText,
-        recommendedAction,
+        reasonText || 'No reason provided',
+        recommendedAction || 'No action recommended',
       ];
     });
     
@@ -115,10 +126,10 @@ export async function recommendations(doc: jsPDF, data: ReportData): Promise<voi
         cellPadding: 3,
       },
       columnStyles: {
-        0: { cellWidth: 25, halign: 'center' }, // Status (traffic light)
-        1: { cellWidth: 35, valign: 'top' }, // Subcategory
-        2: { cellWidth: 50, valign: 'top' }, // Question
-        3: { cellWidth: 40, valign: 'top' }, // Reason for Low Score
+        0: { cellWidth: 15, halign: 'center' }, // Status (traffic light)
+        1: { cellWidth: 28, valign: 'top' }, // Subcategory
+        2: { cellWidth: 42, valign: 'top' }, // Question
+        3: { cellWidth: 35, valign: 'top' }, // Reason for Low Score
         4: { cellWidth: 50, valign: 'top' }, // Recommended Actions
       },
       didDrawCell: (cellData) => {
