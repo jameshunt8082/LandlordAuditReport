@@ -55,6 +55,16 @@ export async function GET(
       } else {
         const questionsData = await questionsResponse.json();
         questionsForScoring = questionsData.questions || getQuestionsByTier(audit.risk_audit_tier);
+        
+        // Debug logging for Q1.2
+        const q12 = questionsForScoring.find((q: any) => q.id === '1.2');
+        if (q12) {
+          console.log('[Review API] Q1.2 loaded:', {
+            hasScoreExamples: !!q12.score_examples,
+            scoreExamplesLength: q12.score_examples?.length || 0,
+            scoreExamples: q12.score_examples
+          });
+        }
       }
     } catch (error: any) {
       console.warn("Error fetching questions from API, using fallback:", error?.message);

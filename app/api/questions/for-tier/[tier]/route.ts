@@ -59,7 +59,18 @@ export async function GET(
     // Log each question with its option count
     result.rows.forEach(row => {
       const optionCount = row.options ? row.options.length : 0;
-      console.log(`   Q${row.question_number}: ${optionCount} options ${optionCount === 0 ? '⚠️  NO OPTIONS!' : ''}`);
+      const scoreExamplesCount = row.score_examples ? row.score_examples.length : 0;
+      console.log(`   Q${row.question_number}: ${optionCount} options, ${scoreExamplesCount} score_examples`);
+      
+      // Debug Q1.2 specifically
+      if (row.question_number === '1.2') {
+        console.log('   [Q1.2 Debug] score_examples from DB:', {
+          raw: row.score_examples,
+          isArray: Array.isArray(row.score_examples),
+          length: row.score_examples?.length,
+          first: row.score_examples?.[0]
+        });
+      }
     });
 
     // Transform to match the Question interface from lib/questions.ts
