@@ -245,7 +245,7 @@ function AuditFormContent({
   }, [allValues, relevantQuestions]);
 
   // Helper function to scroll to first unanswered question in a category
-  // If all questions are answered, scrolls to the first question
+  // If all questions are answered, scrolls to the last question (better UX - shows where you finished)
   const scrollToFirstUnanswered = (categoryQuestions: Question[], allValues: ActualFormData) => {
     // Find first unanswered question (from top to bottom)
     const firstUnanswered = categoryQuestions.find((q) => {
@@ -254,8 +254,8 @@ function AuditFormContent({
       return value !== 1 && value !== 5 && value !== 10;
     });
     
-    // If found unanswered question, scroll to it; otherwise scroll to first question
-    const targetQuestion = firstUnanswered || categoryQuestions[0];
+    // If found unanswered question, scroll to it; otherwise scroll to last question
+    const targetQuestion = firstUnanswered || categoryQuestions[categoryQuestions.length - 1];
     
     if (targetQuestion) {
       const element = document.getElementById(`question-${targetQuestion.id}`);
