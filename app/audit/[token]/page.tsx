@@ -249,6 +249,57 @@ function AuditFormContent({
     return progress;
   }, [allValues, groupedQuestions]);
 
+  // Calculate unanswered questions for warning message
+  const unansweredQuestions = useMemo(() => {
+    return relevantQuestions.filter((q) => {
+      const safeKey = `q_${q.id.replace(/\./g, '_')}`;
+      const value = allValues[safeKey as keyof ActualFormData];
+      return value !== 1 && value !== 5 && value !== 10;
+    });
+  }, [allValues, relevantQuestions]);
+
+  // Helper function to generate detailed error message by section
+  const getMissingQuestionsMessage = (unansweredQuestions: Question[]): string => {
+    if (unansweredQuestions.length === 0) {
+      return "";
+    }
+
+    // Group unanswered questions by category
+    const unansweredByCategory: Record<string, Question[]> = {};
+    unansweredQuestions.forEach((q) => {
+      if (!unansweredByCategory[q.category]) {
+        unansweredByCategory[q.category] = [];
+      }
+      unansweredByCategory[q.category].push(q);
+    });
+
+    // Get section numbers (1-based index)
+    const categoryToSectionNumber: Record<string, number> = {};
+    categories.forEach((cat, index) => {
+      categoryToSectionNumber[cat] = index + 1;
+    });
+
+    // Build message parts
+    const messageParts: string[] = [];
+    Object.entries(unansweredByCategory).forEach(([category, questions]) => {
+      const sectionNumber = categoryToSectionNumber[category];
+      const count = questions.length;
+      const questionText = count === 1 ? "question remaining" : "questions remaining";
+      messageParts.push(`${count} ${questionText} in Section ${sectionNumber}`);
+    });
+
+    const baseMessage = `Please answer all ${totalQuestions} questions before submitting.`;
+    
+    if (messageParts.length === 1) {
+      return `${baseMessage} (${messageParts[0]})`;
+    } else {
+      // Join with " & " for all but the last one, then add " & " before the last
+      const allButLast = messageParts.slice(0, -1).join(", ");
+      const last = messageParts[messageParts.length - 1];
+      return `${baseMessage} (${allButLast} & ${last})`;
+    }
+  };
+
   // Submit handler with enhanced validation
   const onSubmit = async (data: ActualFormData) => {
     setError("");
@@ -263,10 +314,8 @@ function AuditFormContent({
       });
 
       if (unansweredQuestions.length > 0) {
-        setError(
-          `Please answer all questions. ${unansweredQuestions.length} question(s) remaining: ` +
-          unansweredQuestions.map((q) => `Q${q.id}`).join(", ")
-        );
+        const errorMessage = getMissingQuestionsMessage(unansweredQuestions);
+        setError(errorMessage);
         
         // Scroll to first unanswered question
         const firstUnanswered = unansweredQuestions[0];
@@ -549,8 +598,7 @@ function AuditFormContent({
 
               {progress < 100 && currentCategory === categories.length - 1 && (
                 <div className="bg-yellow-50 text-yellow-800 p-3 rounded mt-4 text-sm">
-                  ⚠️ Please answer all {totalQuestions} questions before submitting. 
-                  ({totalQuestions - answeredCount} remaining)
+                  ⚠️ {getMissingQuestionsMessage(unansweredQuestions) || `Please answer all ${totalQuestions} questions before submitting.`}
                 </div>
               )}
             </CardContent>
