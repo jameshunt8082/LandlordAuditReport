@@ -573,7 +573,7 @@ function AuditFormContent({
                     </CardTitle>
                     {question.critical && (
                       <Badge variant="destructive" className="shrink-0">
-                        CRITICAL
+                        STATUTORY REQUIREMENT
                       </Badge>
                     )}
                   </div>
