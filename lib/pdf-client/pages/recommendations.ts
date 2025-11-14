@@ -82,6 +82,19 @@ export async function recommendations(doc: jsPDF, data: ReportData): Promise<voi
     
     // Prepare table body with 5 columns: Status, Subcategory, Question, Reason for Low Score, Recommended Actions
     const tableBody = category.questions.map(question => {
+      // Debug logging for all questions in Recommended Actions
+      if (question.number === '1.2') {
+        console.log('[PDF] Processing Q1.2 in Recommended Actions:', {
+          category: question.category,
+          subcategory: question.subcategory,
+          score: question.score,
+          color: question.color,
+          hasScoreExamples: !!question.score_examples,
+          scoreExamplesLength: question.score_examples?.length || 0,
+          scoreExamples: question.score_examples
+        });
+      }
+      
       const reasonText = getReasonForLowScore(question);
       const recommendedAction = getRecommendedAction(question, data);
       
