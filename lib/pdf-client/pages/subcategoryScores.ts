@@ -55,11 +55,13 @@ export async function subcategoryScores(doc: jsPDF, data: ReportData): Promise<v
     // Category header (check if we have space for at least header + 2 bars)
     yPos = addNewPageIfNeeded(doc, yPos, 25 + (Math.min(2, category.subcats.length) * 10));
     
-    // Category heading - larger and more prominent per James feedback
+    // Category heading - centered above bar graph per James feedback
     doc.setFontSize(FONTS.h2.size); // Increased from h3 to h2 (15 vs 13)
     doc.setFont('helvetica', FONTS.h2.style);
     setTextColorHex(doc, COLORS.blue); // Changed from darkGray to blue for prominence
-    doc.text(category.name, startX, yPos);
+    // Center the category name above the bar graph section
+    const pageWidth = 210; // A4 width in mm
+    doc.text(category.name, pageWidth / 2, yPos, { align: 'center' });
     yPos += 14; // Increased spacing from 10 to 14
     
     // Draw bars for each subcategory
