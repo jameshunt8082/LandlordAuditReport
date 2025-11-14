@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -127,6 +127,11 @@ function AuditFormContent({
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
   const [currentCategory, setCurrentCategory] = useState(0);
+  const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
+  const [selectedAnswers, setSelectedAnswers] = useState<Record<string, number>>({});
+  const [showSavedToast, setShowSavedToast] = useState(false);
+  const lastSavedRef = useRef<number>(0);
+  const questionRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   // Use questions from database (passed as props)
   const relevantQuestions = questions;
@@ -134,6 +139,74 @@ function AuditFormContent({
   const categories = Object.keys(groupedQuestions);
   const currentCategoryName = categories[currentCategory];
   const currentQuestions = groupedQuestions[currentCategoryName] || [];
+
+  // Calculate progress
+  const allValues = watch();
+  const { answeredCount, progress } = useMemo(() => {
+    const answered = relevantQuestions.filter((q) => {
+      const safeKey = `q_${q.id.replace(/\./g, '_')}`;
+      const value = allValues[safeKey as keyof ActualFormData];
+      return value === 1 || value === 5 || value === 10;
+    }).length;
+    const total = relevantQuestions.length;
+    const prog = total > 0 ? (answered / total) * 100 : 0;
+    return { answeredCount: answered, progress: prog };
+  }, [allValues, relevantQuestions]);
+
+  // Helper function to scroll to first unanswered question in a category
+  const scrollToFirstUnanswered = (categoryQuestions: Question[]) => {
+    const firstUnanswered = categoryQuestions.find((q) => {
+      const safeKey = `q_${q.id.replace(/\./g, '_')}`;
+      const value = allValues[safeKey as keyof ActualFormData];
+      return value !== 1 && value !== 5 && value !== 10;
+    });
+    
+    if (firstUnanswered) {
+      const element = document.getElementById(`question-${firstUnanswered.id}`);
+      if (element) {
+        const yOffset = -120; // Offset for sticky header
+        const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
+        window.scrollTo({ top: y, behavior: "smooth" });
+      }
+    } else {
+      // If all answered, scroll to first question
+      const firstQuestion = categoryQuestions[0];
+      if (firstQuestion) {
+        const element = document.getElementById(`question-${firstQuestion.id}`);
+        if (element) {
+          const yOffset = -120;
+          const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
+          window.scrollTo({ top: y, behavior: "smooth" });
+        }
+      }
+    }
+  };
+
+  // Scroll to first question when section changes
+  useEffect(() => {
+    if (currentQuestions.length > 0) {
+      // Small delay to ensure DOM is updated
+      setTimeout(() => {
+        const firstQuestionId = currentQuestions[0].id;
+        const element = document.getElementById(`question-${firstQuestionId}`);
+        if (element) {
+          // Scroll with offset to account for sticky header
+          const yOffset = -120;
+          const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
+          window.scrollTo({ top: y, behavior: "smooth" });
+          
+          // Focus first radio button for accessibility
+          const firstRadio = element.querySelector('input[type="radio"]') as HTMLInputElement;
+          if (firstRadio) {
+            // Small delay to ensure scroll completes
+            setTimeout(() => {
+              firstRadio.focus();
+            }, 500);
+          }
+        }
+      }, 100);
+    }
+  }, [currentCategory, currentQuestions]);
 
   // CRITICAL: Replace dots with underscores to avoid React Hook Form dot notation parsing
   // RHF treats "1.1" as nested path { 1: { 1: value } }, causing form state corruption
@@ -171,6 +244,7 @@ function AuditFormContent({
         const parsed = JSON.parse(savedData);
         const validQuestionIds = relevantQuestions.map(q => q.id);
         const validData: Partial<ActualFormData> = {};
+        const restoredAnswers: Record<string, number> = {};
         
         // Build clean data object with ONLY valid keys
         Object.entries(parsed).forEach(([key, value]) => {
@@ -183,6 +257,7 @@ function AuditFormContent({
           if (validQuestionIds.includes(cleanKey) && (value === 1 || value === 5 || value === 10)) {
             const safeKey = `q_${cleanKey.replace(/\./g, '_')}`;
             validData[safeKey as keyof ActualFormData] = value as any;
+            restoredAnswers[cleanKey] = value as number;
           }
         });
         
@@ -192,6 +267,7 @@ function AuditFormContent({
             relevantQuestions.map(q => [`q_${q.id.replace(/\./g, '_')}`, validData[`q_${q.id.replace(/\./g, '_')}` as keyof ActualFormData] || undefined])
           );
           reset(defaultValues as any, { keepDirty: false });
+          setSelectedAnswers(restoredAnswers);
         }
       } catch (error) {
         console.error("Failed to restore form data:", error);
@@ -200,7 +276,7 @@ function AuditFormContent({
     }
   }, [audit.token, relevantQuestions, reset]);
 
-  // Auto-save form data to localStorage
+  // Auto-save form data to localStorage with toast notification
   useEffect(() => {
     const storageKey = `audit-form-${audit.token}`;
     const subscription = watch((value) => {
@@ -209,10 +285,49 @@ function AuditFormContent({
         Object.entries(value).filter(([_, v]) => v === 1 || v === 5 || v === 10)
       );
       localStorage.setItem(storageKey, JSON.stringify(cleanData));
+      
+      // Show "Saved" toast with debounce (only show once every 1.5s)
+      const now = Date.now();
+      if (now - lastSavedRef.current > 1500) {
+        setShowSavedToast(true);
+        lastSavedRef.current = now;
+        setTimeout(() => setShowSavedToast(false), 2000);
+      }
     });
     
     return () => subscription.unsubscribe();
   }, [audit.token, watch]);
+
+  // Scroll spy: detect which question is currently in view
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting && entry.intersectionRatio > 0.5) {
+            const questionId = entry.target.getAttribute('id')?.replace('question-', '') || null;
+            if (questionId) {
+              setActiveQuestionId(questionId);
+            }
+          }
+        });
+      },
+      {
+        rootMargin: '-100px 0px -50% 0px',
+        threshold: [0.5],
+      }
+    );
+
+    // Observe all question cards
+    Object.values(questionRefs.current).forEach((ref) => {
+      if (ref) observer.observe(ref);
+    });
+
+    return () => {
+      Object.values(questionRefs.current).forEach((ref) => {
+        if (ref) observer.unobserve(ref);
+      });
+    };
+  }, [currentQuestions]);
 
   // Calculate progress
   const allValues = watch();
@@ -477,23 +592,26 @@ function AuditFormContent({
           </CardContent>
         </Card>
 
-        {/* Progress */}
-        <Card>
-          <CardContent className="pt-6">
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm" aria-live="polite" aria-atomic="true">
-                <span>
-                  Progress: {answeredCount} of {totalQuestions} questions answered
-                </span>
-                <span>{Math.round(progress)}%</span>
+        {/* Sticky Progress Bar */}
+        <div className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b shadow-sm mb-6 -mx-4 sm:-mx-6 px-4 sm:px-6 py-4">
+          <Card className="border-0 shadow-none bg-transparent">
+            <CardContent className="pt-0 pb-0 px-0">
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm" aria-live="polite" aria-atomic="true">
+                  <span className="font-medium">
+                    Progress: {answeredCount} of {totalQuestions} questions answered
+                  </span>
+                  <span className="font-semibold text-blue-600">{Math.round(progress)}%</span>
+                </div>
+                <Progress 
+                  value={progress} 
+                  aria-label={`Form completion progress: ${Math.round(progress)}%`}
+                  className="h-2"
+                />
               </div>
-              <Progress 
-                value={progress} 
-                aria-label={`Form completion progress: ${Math.round(progress)}%`}
-              />
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </div>
 
         {/* Auto-save notification */}
         <Card>
@@ -564,61 +682,122 @@ function AuditFormContent({
               {currentCategory + 1}. {currentCategoryName}
             </h2>
 
-            {currentQuestions.map((question, index) => (
-              <Card key={question.id} id={`question-${question.id}`}>
-                <CardHeader>
-                  <div className="flex items-start justify-between gap-4">
-                    <CardTitle className="text-base font-medium leading-relaxed">
-                      Q{question.id}: {question.text}
-                    </CardTitle>
-                    {question.critical && (
-                      <Badge variant="destructive" className="shrink-0">
-                        STATUTORY REQUIREMENT
-                      </Badge>
-                    )}
-                  </div>
-                  {question.motivation_learning_point && (
-                    <CardDescription className="mt-3 italic text-gray-600 leading-relaxed">
-                      {question.motivation_learning_point}
-                    </CardDescription>
-                  )}
-                </CardHeader>
-                <CardContent>
-                  <Controller
-                    name={`q_${question.id.replace(/\./g, '_')}` as any}
-                    control={control}
-                    render={({ field }) => (
-                      <div role="radiogroup" aria-label={question.text} aria-required="true">
-                        {question.options.map((option) => (
-                          <div key={option.value} className="flex items-start space-x-3 mb-4">
-                            <input
-                              type="radio"
-                              id={`${question.id}-${option.value}`}
-                              value={option.value}
-                              checked={field.value === option.value}
-                              onChange={(e) => field.onChange(parseInt(e.target.value, 10))}
-                              className="mt-1 h-4 w-4 cursor-pointer"
-                              aria-label={`Score ${option.value}: ${option.label}`}
+            {currentQuestions.map((question, index) => {
+              const safeKey = `q_${question.id.replace(/\./g, '_')}`;
+              const isActive = activeQuestionId === question.id;
+              const answerValue = allValues[safeKey as keyof ActualFormData];
+              const isAnswered = answerValue === 1 || answerValue === 5 || answerValue === 10;
+              
+              return (
+                <Card 
+                  key={question.id} 
+                  id={`question-${question.id}`}
+                  ref={(el) => {
+                    questionRefs.current[question.id] = el;
+                  }}
+                  className={`transition-all duration-300 ${
+                    isActive 
+                      ? 'ring-2 ring-blue-500 ring-opacity-50 shadow-lg' 
+                      : ''
+                  } ${isAnswered ? 'border-green-200' : ''}`}
+                >
+                  <CardHeader>
+                    <div className="flex items-start justify-between gap-4">
+                      <CardTitle className="text-base font-medium leading-relaxed">
+                        Q{question.id}: {question.text}
+                      </CardTitle>
+                      {question.critical && (
+                        <Badge variant="destructive" className="shrink-0">
+                          STATUTORY REQUIREMENT
+                        </Badge>
+                      )}
+                      {isAnswered && (
+                        <div className="shrink-0 animate-in fade-in zoom-in duration-300">
+                          <svg
+                            className="w-5 h-5 text-green-500"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M5 13l4 4L19 7"
                             />
-                            <Label
-                              htmlFor={`${question.id}-${option.value}`}
-                              className="font-normal cursor-pointer leading-relaxed flex-1 text-sm"
-                            >
-                              {option.label}
-                            </Label>
-                          </div>
-                        ))}
-                      </div>
+                          </svg>
+                        </div>
+                      )}
+                    </div>
+                    {question.motivation_learning_point && (
+                      <CardDescription className="mt-3 italic text-gray-600 leading-relaxed">
+                        {question.motivation_learning_point}
+                      </CardDescription>
                     )}
-                  />
-                  {errors[`q_${question.id.replace(/\./g, '_')}` as keyof typeof errors] && (
-                    <p className="text-sm text-red-600 mt-2" role="alert" aria-live="polite">
-                      {errors[`q_${question.id.replace(/\./g, '_')}` as keyof typeof errors]?.message as string}
-                    </p>
-                  )}
-                </CardContent>
-              </Card>
-            ))}
+                  </CardHeader>
+                  <CardContent>
+                    <Controller
+                      name={`q_${question.id.replace(/\./g, '_')}` as any}
+                      control={control}
+                      render={({ field }) => (
+                        <div role="radiogroup" aria-label={question.text} aria-required="true">
+                          {question.options.map((option) => {
+                            const isSelected = field.value === option.value;
+                            return (
+                              <div 
+                                key={option.value} 
+                                className={`flex items-start space-x-3 mb-4 p-3 rounded-lg transition-all duration-200 ${
+                                  isSelected 
+                                    ? 'bg-blue-50 border-2 border-blue-300 scale-[1.02]' 
+                                    : 'hover:bg-gray-50 border-2 border-transparent'
+                                }`}
+                              >
+                                <div className="relative mt-0.5">
+                                  <input
+                                    type="radio"
+                                    id={`${question.id}-${option.value}`}
+                                    value={option.value}
+                                    checked={isSelected}
+                                    onChange={(e) => {
+                                      const value = parseInt(e.target.value, 10);
+                                      field.onChange(value);
+                                      setSelectedAnswers((prev) => ({
+                                        ...prev,
+                                        [question.id]: value,
+                                      }));
+                                    }}
+                                    className="h-4 w-4 cursor-pointer accent-blue-600"
+                                    aria-label={`Score ${option.value}: ${option.label}`}
+                                  />
+                                  {isSelected && (
+                                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none animate-in zoom-in duration-200">
+                                      <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+                                    </div>
+                                  )}
+                                </div>
+                                <Label
+                                  htmlFor={`${question.id}-${option.value}`}
+                                  className={`font-normal cursor-pointer leading-relaxed flex-1 text-sm transition-colors ${
+                                    isSelected ? 'text-blue-900 font-medium' : ''
+                                  }`}
+                                >
+                                  {option.label}
+                                </Label>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    />
+                    {errors[`q_${question.id.replace(/\./g, '_')}` as keyof typeof errors] && (
+                      <p className="text-sm text-red-600 mt-2" role="alert" aria-live="polite">
+                        {errors[`q_${question.id.replace(/\./g, '_')}` as keyof typeof errors]?.message as string}
+                      </p>
+                    )}
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
 
           {/* Navigation */}
@@ -628,7 +807,16 @@ function AuditFormContent({
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => setCurrentCategory(Math.max(0, currentCategory - 1))}
+                  onClick={() => {
+                    const prevCategory = Math.max(0, currentCategory - 1);
+                    setCurrentCategory(prevCategory);
+                    // Scroll to first unanswered question in previous section
+                    setTimeout(() => {
+                      const prevCategoryName = categories[prevCategory];
+                      const prevQuestions = groupedQuestions[prevCategoryName] || [];
+                      scrollToFirstUnanswered(prevQuestions);
+                    }, 200);
+                  }}
                   disabled={currentCategory === 0}
                 >
                   Previous Section
@@ -637,7 +825,9 @@ function AuditFormContent({
                 {currentCategory < categories.length - 1 ? (
                   <Button
                     type="button"
-                    onClick={() => setCurrentCategory(currentCategory + 1)}
+                    onClick={() => {
+                      setCurrentCategory(currentCategory + 1);
+                    }}
                   >
                     Next Section
                   </Button>
@@ -669,6 +859,28 @@ function AuditFormContent({
             </CardContent>
           </Card>
         </form>
+
+        {/* Saved Toast Notification */}
+        {showSavedToast && (
+          <div className="fixed bottom-6 right-6 z-50 animate-in slide-in-from-bottom-5 fade-in duration-300">
+            <div className="bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-3">
+              <svg
+                className="w-5 h-5 shrink-0"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M5 13l4 4L19 7"
+                />
+              </svg>
+              <span className="font-medium">Saved</span>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

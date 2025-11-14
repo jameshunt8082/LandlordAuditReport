@@ -12,7 +12,7 @@ import { auditScope } from './pages/auditScope';
 import { evidenceSummary } from './pages/evidenceSummary';
 import { introduction } from './pages/introduction';
 // import { results } from './pages/results'; // REMOVED (Category Scores table)
-import { subcategoryScores } from './pages/subcategoryScores';
+// import { subcategoryScores } from './pages/subcategoryScores'; // REMOVED PER JAMES FEEDBACK: Bar graph section not necessary, kept commented in case we need it in future
 import { recommendations } from './pages/recommendations';
 import { actionPlan } from './pages/actionPlan';
 import { detailedResults } from './pages/detailedResults';
@@ -73,9 +73,9 @@ export async function generateCompletePDF(data: ReportData): Promise<jsPDF> {
     // console.log('[PDF Generator] Generating results...');
     // await results(doc, data);
     
-    // Subcategory Scores (Bar Charts)
-    console.log('[PDF Generator] Generating subcategory scores...');
-    await subcategoryScores(doc, data);
+    // REMOVED PER JAMES FEEDBACK: Subcategory Scores (Bar Charts) - not necessary, kept commented in case we need it in future
+    // console.log('[PDF Generator] Generating subcategory scores...');
+    // await subcategoryScores(doc, data);
     
     // Recommended Actions (Opción A: 3 tables by category, no timeline structure)
     console.log('[PDF Generator] Generating recommended actions...');
