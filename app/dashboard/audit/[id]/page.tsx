@@ -236,9 +236,12 @@ export default function AuditReviewPage() {
                             <Badge className={getPriorityBadge(action.priority)}>
                               {action.priority.toUpperCase()}
                             </Badge>
-                            <span title={priorityExplanation} className="cursor-help">
-                              <Info className="w-4 h-4 text-gray-400" />
-                            </span>
+                            <div className="relative group">
+                              <Info className="w-4 h-4 text-gray-400 cursor-help hover:text-gray-600 transition-colors" />
+                              <div className="absolute left-0 top-6 hidden group-hover:block z-50 w-80 p-3 bg-gray-900 text-white text-xs rounded-lg shadow-xl border border-gray-700 pointer-events-none">
+                                {priorityExplanation}
+                              </div>
+                            </div>
                           </div>
                           <span className="text-sm text-gray-600">
                             Q{action.questionId}
@@ -268,9 +271,12 @@ export default function AuditReviewPage() {
                         <span className="text-sm font-medium text-blue-900">
                           ⏱ Timeframe: {action.timeframe}
                         </span>
-                        <span title={timeframeExplanation} className="cursor-help flex-shrink-0">
-                          <Info className="w-4 h-4 text-blue-600 mt-0.5" />
-                        </span>
+                        <div className="relative group flex-shrink-0">
+                          <Info className="w-4 h-4 text-blue-600 mt-0.5 cursor-help hover:text-blue-700 transition-colors" />
+                          <div className="absolute right-0 top-6 hidden group-hover:block z-50 w-80 p-3 bg-gray-900 text-white text-xs rounded-lg shadow-xl border border-gray-700 pointer-events-none">
+                            {timeframeExplanation}
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </CardContent>
