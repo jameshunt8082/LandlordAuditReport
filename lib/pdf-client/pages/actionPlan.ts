@@ -36,18 +36,9 @@ export async function actionPlan(doc: jsPDF, data: ReportData): Promise<void> {
   yPos += wrapped.length * 4 + 20;
   
   // Categorize actions by priority/timeline (only 2 sections per James feedback)
-  const immediateActions: string[] = [];
-  const shortTermActions: string[] = [];
-  
-  // Critical findings (score 1-3) = Immediate (0-7 days)
-  data.questionResponses.red.forEach(q => {
-    immediateActions.push(`${q.subcategory}: ${q.questionText.substring(0, 100)}${q.questionText.length > 100 ? '...' : ''}`);
-  });
-  
-  // Orange findings (score 4-6) = Short-term (1-4 weeks)
-  data.questionResponses.orange.forEach(q => {
-    shortTermActions.push(`${q.subcategory}: ${q.questionText.substring(0, 100)}${q.questionText.length > 100 ? '...' : ''}`);
-  });
+  // Now storing full question objects to access CSV data (red_score_example, report_action)
+  const immediateActions = data.questionResponses.red;
+  const shortTermActions = data.questionResponses.orange;
   
   // IMMEDIATE ACTIONS
   if (immediateActions.length > 0) {
@@ -75,29 +66,35 @@ export async function actionPlan(doc: jsPDF, data: ReportData): Promise<void> {
     doc.text('Critical compliance issues exposing you to immediate fines or prosecution.', startX + 8, yPos + 5);
     yPos += 10;
     
-    // Action items
-    immediateActions.forEach((action, idx) => {
-      const actionHeight = 15;
+    // Action items (using CSV data per James feedback)
+    immediateActions.forEach((q, idx) => {
+      // Use red_score_example for left column, report_action for right column
+      const leftColumnText = q.red_score_example || 'Critical issue identified';
+      const rightColumnText = q.report_action || `${q.subcategory}: ${q.questionText}`;
+      
+      const leftWrapped = doc.splitTextToSize(leftColumnText, 65);
+      const rightWrapped = doc.splitTextToSize(rightColumnText, contentWidth - 80);
+      const actionHeight = Math.max(leftWrapped.length * 4, rightWrapped.length * 4) + 10;
+      
       yPos = addNewPageIfNeeded(doc, yPos, actionHeight);
       
       setDrawColorHex(doc, COLORS.lightGray);
       doc.setLineWidth(0.1);
       doc.line(startX, yPos, startX + contentWidth, yPos);
       
-      // Priority badge
+      // Left column: red_score_example (from Column U in spreadsheet)
       doc.setFontSize(9);
       doc.setFont('helvetica', 'bold');
       setTextColorHex(doc, COLORS.red);
-      doc.text('CRITICAL', startX + 8, yPos + 8);
+      doc.text(leftWrapped, startX + 8, yPos + 6);
       
-      // Action text
+      // Right column: report_action (from Column X in spreadsheet)
       doc.setFontSize(10);
       doc.setFont('helvetica', 'normal');
       setTextColorHex(doc, COLORS.black);
-      const actionWrapped = doc.splitTextToSize(action, contentWidth - 80);
-      doc.text(actionWrapped, startX + 80, yPos + 8);
+      doc.text(rightWrapped, startX + 80, yPos + 6);
       
-      yPos += Math.max(actionHeight, actionWrapped.length * 4 + 6);
+      yPos += actionHeight;
     });
     
     yPos += 15;
@@ -122,26 +119,35 @@ export async function actionPlan(doc: jsPDF, data: ReportData): Promise<void> {
     doc.text('Areas needing improvement to meet compliance standards.', startX + 8, yPos + 5);
     yPos += 10;
     
-    shortTermActions.forEach((action, idx) => {
-      const actionHeight = 15;
+    // Action items (using CSV data per James feedback)
+    shortTermActions.forEach((q, idx) => {
+      // Use orange_score_example for left column, report_action for right column
+      const leftColumnText = q.orange_score_example || 'Improvement needed';
+      const rightColumnText = q.report_action || `${q.subcategory}: ${q.questionText}`;
+      
+      const leftWrapped = doc.splitTextToSize(leftColumnText, 65);
+      const rightWrapped = doc.splitTextToSize(rightColumnText, contentWidth - 80);
+      const actionHeight = Math.max(leftWrapped.length * 4, rightWrapped.length * 4) + 10;
+      
       yPos = addNewPageIfNeeded(doc, yPos, actionHeight);
       
       setDrawColorHex(doc, COLORS.lightGray);
       doc.setLineWidth(0.1);
       doc.line(startX, yPos, startX + contentWidth, yPos);
       
+      // Left column: orange_score_example (from Column V/W in spreadsheet)
       doc.setFontSize(9);
       doc.setFont('helvetica', 'bold');
       setTextColorHex(doc, COLORS.orange);
-      doc.text('HIGH', startX + 8, yPos + 8);
+      doc.text(leftWrapped, startX + 8, yPos + 6);
       
+      // Right column: report_action (from Column X in spreadsheet)
       doc.setFontSize(10);
       doc.setFont('helvetica', 'normal');
       setTextColorHex(doc, COLORS.black);
-      const actionWrapped = doc.splitTextToSize(action, contentWidth - 80);
-      doc.text(actionWrapped, startX + 80, yPos + 8);
+      doc.text(rightWrapped, startX + 80, yPos + 6);
       
-      yPos += Math.max(actionHeight, actionWrapped.length * 4 + 6);
+      yPos += actionHeight;
     });
     
     yPos += 15;
