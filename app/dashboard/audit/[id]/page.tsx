@@ -236,10 +236,9 @@ export default function AuditReviewPage() {
                             <Badge className={getPriorityBadge(action.priority)}>
                               {action.priority.toUpperCase()}
                             </Badge>
-                            <Info 
-                              className="w-4 h-4 text-gray-400 cursor-help" 
-                              title={priorityExplanation}
-                            />
+                            <span title={priorityExplanation} className="cursor-help">
+                              <Info className="w-4 h-4 text-gray-400" />
+                            </span>
                           </div>
                           <span className="text-sm text-gray-600">
                             Q{action.questionId}
@@ -269,10 +268,9 @@ export default function AuditReviewPage() {
                         <span className="text-sm font-medium text-blue-900">
                           ⏱ Timeframe: {action.timeframe}
                         </span>
-                        <Info 
-                          className="w-4 h-4 text-blue-600 cursor-help mt-0.5 flex-shrink-0" 
-                          title={timeframeExplanation}
-                        />
+                        <span title={timeframeExplanation} className="cursor-help flex-shrink-0">
+                          <Info className="w-4 h-4 text-blue-600 mt-0.5" />
+                        </span>
                       </div>
                     </div>
                   </CardContent>
