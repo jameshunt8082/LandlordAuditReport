@@ -13,7 +13,7 @@ import { evidenceSummary } from './pages/evidenceSummary';
 import { introduction } from './pages/introduction';
 // import { results } from './pages/results'; // REMOVED (Category Scores table)
 import { subcategoryScores } from './pages/subcategoryScores';
-import { recommendations } from './pages/recommendations';
+// import { recommendations } from './pages/recommendations'; // REMOVED - Consolidated into Action Plan
 import { actionPlan } from './pages/actionPlan';
 import { detailedResults } from './pages/detailedResults';
 
@@ -77,12 +77,14 @@ export async function generateCompletePDF(data: ReportData): Promise<jsPDF> {
     console.log('[PDF Generator] Generating subcategory scores...');
     await subcategoryScores(doc, data);
     
-    // Recommendations
-    console.log('[PDF Generator] Generating recommendations...');
-    await recommendations(doc, data);
+    // REMOVED PER ANALYSIS: Recommendations page was redundant with Action Plan
+    // Both showed same data (red/orange issues + suggestions), just grouped differently
+    // Action Plan now has all the CSV data (red_score_example, report_action)
+    // console.log('[PDF Generator] Generating recommendations...');
+    // await recommendations(doc, data);
     
-    // Action Plan
-    console.log('[PDF Generator] Generating action plan...');
+    // Suggestions for Improvement (formerly Action Plan)
+    console.log('[PDF Generator] Generating suggestions for improvement...');
     await actionPlan(doc, data);
     
     // Detailed Results
