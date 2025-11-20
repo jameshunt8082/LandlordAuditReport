@@ -164,7 +164,7 @@ export function generateMinimalReportHTML(data: MinimalReportData): string {
         </div>
         
         <div class="footer">
-          © Copyright Landlord Safeguarding. 2003 - ${new Date().getFullYear()}
+          © Copyright Landlord Safeguarding Ltd.
         </div>
       </div>
     </body>

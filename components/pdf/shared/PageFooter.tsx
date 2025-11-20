@@ -18,9 +18,7 @@ interface PageFooterProps {
   text?: string;
 }
 
-const currentYear = new Date().getFullYear();
-
-export const PageFooter = ({ text = `© Copyright Landlord Safeguarding. 2003 - ${currentYear}` }: PageFooterProps) => (
+export const PageFooter = ({ text = '© Copyright Landlord Safeguarding Ltd.' }: PageFooterProps) => (
   <View style={styles.footer} fixed>
     <Text>{text}</Text>
   </View>
