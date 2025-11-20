@@ -67,7 +67,7 @@ export async function coverPage(doc: jsPDF, data: ReportData): Promise<void> {
   yPos += 15;
   
   // Green banner with "COMPLIANCE ASSESSMENT"
-  const bannerWidth = pageWidth * 0.8;
+  /*const bannerWidth = pageWidth * 0.8;
   const bannerX = (pageWidth - bannerWidth) / 2;
   const bannerHeight = 15;
   
@@ -78,7 +78,7 @@ export async function coverPage(doc: jsPDF, data: ReportData): Promise<void> {
   doc.setFont('helvetica', 'bold');
   setTextColorHex(doc, COLORS.white);
   doc.text('COMPLIANCE ASSESSMENT', centerX, yPos + 10, { align: 'center' });
-  yPos += bannerHeight + 20;
+  yPos += bannerHeight + 20;*/
   
   // Property Info
   doc.setFontSize(14);
