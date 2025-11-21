@@ -64,11 +64,11 @@ const ReportDocument = ({
   return (
     <Document
       title={`Landlord Risk Audit Report - ${data.propertyAddress}`}
-      author="Landlord Safeguarding"
+      author="Landlord Safeguarding Ltd"
       subject="Risk Assessment Report"
       keywords="landlord, audit, risk assessment, compliance, property management"
       creator="Landlord Safeguarding Audit System"
-      producer="Landlord Safeguarding"
+      producer="Landlord Safeguarding Ltd"
     >
       {/* Cover Page - Clean and professional (no charts) */}
       <CoverPage

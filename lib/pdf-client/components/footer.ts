@@ -12,7 +12,7 @@ export function addPageFooter(doc: jsPDF): void {
   doc.setFontSize(10);
   setTextColorHex(doc, COLORS.mediumGray);
   doc.text(
-    `© ${year} Landlord Safeguarding. All rights reserved.`,
+    `© ${year} Landlord Safeguarding Ltd. All rights reserved.`,
     pageWidth / 2,
     pageHeight - margins.bottom + 15,
     { align: 'center' }
