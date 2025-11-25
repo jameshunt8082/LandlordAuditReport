@@ -6,6 +6,7 @@ export const COLORS = {
   // Primary brand colors
   primaryGreen: '#38761d',
   darkGreen: '#34a853',
+  topBarColor: '#bbbeaf',  // Cover page top decorative bar
   
   // Category colors
   blue: '#0b5394',
