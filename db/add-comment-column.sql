@@ -7,3 +7,4 @@ ADD COLUMN IF NOT EXISTS comment TEXT;
 -- Add comment to existing queries for completeness
 COMMENT ON COLUMN question_templates.comment IS 'Client-facing comment field shown when answering questions. Provides helpful guidance for the client.';
 
+
