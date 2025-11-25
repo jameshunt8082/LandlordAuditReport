@@ -29,8 +29,8 @@ export async function coverPage(doc: jsPDF, data: ReportData): Promise<void> {
   };
   const tierColor = tierColors[tierNumber] || COLORS.mediumGray;
   
-  // 1. Decorative top bar (green)
-  setFillColorHex(doc, COLORS.primaryGreen);
+  // 1. Decorative top bar (sage/beige color #bbbeaf)
+  setFillColorHex(doc, COLORS.topBarColor);
   doc.rect(0, 0, pageWidth, 15, 'F');
   
   // 2. Metadata - Top Right

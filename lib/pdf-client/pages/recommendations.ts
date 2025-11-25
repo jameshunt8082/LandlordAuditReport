@@ -25,7 +25,7 @@ export async function recommendations(doc: jsPDF, data: ReportData): Promise<voi
   // Main Title
   doc.setFontSize(FONTS.h1.size);
   doc.setFont('helvetica', FONTS.h1.style);
-  setTextColorHex(doc, COLORS.primaryGreen);
+  setTextColorHex(doc, COLORS.black);
   doc.text('Recommended Actions', startX, yPos);
   yPos += 20;
   
