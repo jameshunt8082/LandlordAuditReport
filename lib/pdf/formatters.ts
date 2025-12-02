@@ -1,5 +1,5 @@
 // PDF Report Data Formatters
-import { Audit, FormResponse } from '@/types/database';
+import { Audit, FormResponse, Note } from '@/types/database';
 import { Question } from '@/lib/questions';
 import { CategoryScore, OverallScore, RecommendedAction } from '@/lib/scoring';
 import { getTrafficLightColor } from './styles';
@@ -96,7 +96,8 @@ export function transformAuditToReportData(
     categoryScores: CategoryScore[];
     overallScore: OverallScore;
     recommendedActions: RecommendedAction[];
-  }
+   },
+  notes?: Note[]
 ): ReportData {
   // 1. Calculate subcategory scores
   const subcategoryScores = calculateSubcategoryScores(responses, questions);
@@ -109,7 +110,7 @@ export function transformAuditToReportData(
   );
   
   // 3. Sort question responses by score (red, orange, green)
-  const questionResponses = sortQuestionResponses(responses, questions);
+  const questionResponses = sortQuestionResponses(responses, questions, notes);
   
   // 4. Suggest follow-on services for low-scoring areas
   const suggestedServices = generateServiceRecommendations(subcategoryScores);
@@ -299,7 +300,8 @@ function generateRecommendationsByCategory(
  */
 function sortQuestionResponses(
   responses: FormResponse[],
-  questions: Question[]
+  questions: Question[],
+  notes?: Note[]
 ): {
   red: QuestionResponseData[];
   orange: QuestionResponseData[];
@@ -315,6 +317,20 @@ function sortQuestionResponses(
     green: [],
   };
   
+  // Create a map of notes by question_id for quick lookup
+  const notesMap = new Map<string, string>();
+  if (notes && notes.length > 0) {
+    notes.forEach(note => {
+      // If there are multiple notes for the same question, concatenate them
+      const existingNote = notesMap.get(note.question_id);
+      if (existingNote) {
+        notesMap.set(note.question_id, `${existingNote}\n${note.content}`);
+      } else {
+        notesMap.set(note.question_id, note.content);
+      }
+    });
+  }
+  
   responses.forEach(response => {
     const question = questions.find(q => q.id === response.question_id);
     if (!question) {
@@ -327,6 +343,9 @@ function sortQuestionResponses(
       console.error(`[Formatters] Question ${question.id} has no options array:`, question);
       return;
     }
+    
+    // Get comment for this question
+    const comment = notesMap.get(question.id);
     
     const option = question.options.find(opt => opt.value === response.answer_value);
     if (!option) {
@@ -344,6 +363,7 @@ function sortQuestionResponses(
       answer: fallbackAnswer,
       score: response.answer_value,
       color,
+      comment,
       score_examples: question.score_examples,
     };
       
@@ -361,6 +381,7 @@ function sortQuestionResponses(
       answer: option.label || 'No answer text',
       score: response.answer_value,
       color,
+      comment,
       score_examples: question.score_examples,
     };
     

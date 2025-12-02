@@ -68,7 +68,23 @@ function drawQuestionCard(
   const answerWrapped = doc.splitTextToSize(question.answer, answerMaxWidth);
   doc.text(answerWrapped, answerTextX, cardY);
   
-  cardY += answerWrapped.length * 4 + cardPadding;
+  cardY += answerWrapped.length * 4 + 5;
+  
+  // Comment section (if comment exists)
+  if (question.comment && question.comment.trim() !== '') {
+    doc.setFont('helvetica', 'bold');
+    setTextColorHex(doc, COLORS.blue);
+    doc.text('Comment:', startX + cardPadding, cardY);
+    cardY += 5;
+    
+    doc.setFont('helvetica', 'normal');
+    setTextColorHex(doc, COLORS.mediumGray);
+    const commentWrapped = doc.splitTextToSize(question.comment, contentWidth - cardPadding * 2);
+    doc.text(commentWrapped, startX + cardPadding, cardY);
+    cardY += commentWrapped.length * 4 + cardPadding;
+  } else {
+    cardY += cardPadding - 5;
+  }
   
   // Draw card border now that we know height
   const cardHeight = cardY - borderY;

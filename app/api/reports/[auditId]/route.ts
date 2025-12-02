@@ -78,6 +78,14 @@ export async function GET(
       );
     }
     
+    // 4.1 Fetch notes/comments for the audit
+    const notesResult = await sql`
+      SELECT * FROM notes
+      WHERE audit_id = ${auditId}
+      ORDER BY question_id
+    `;
+    const notes = notesResult.rows as any[];
+    
     // 5. Fetch questions for this tier
     console.log(`[PDF] Step 5: Fetching questions for tier ${audit.risk_audit_tier}...`);
     let questions: any[] = [];
@@ -117,9 +125,9 @@ export async function GET(
       const scores = calculateAuditScores(responses, questions);
       console.log(`[PDF] ✓ Calculated scores: Overall ${scores.overallScore.score}, Risk Level: ${scores.overallScore.riskLevel}`);
     
-      // 7. Transform data to report format
+      // 7. Transform data to report format (include notes for comments)
       console.log(`[PDF] Step 7: Transforming audit data to report format...`);
-      const reportData = transformAuditToReportData(audit, responses, questions, scores);
+      const reportData = transformAuditToReportData(audit, responses, questions, scores, notes);
       console.log(`[PDF] ✓ Transformed data:`);
       console.log(`[PDF]   - Red questions: ${reportData.questionResponses.red.length}`);
       console.log(`[PDF]   - Orange questions: ${reportData.questionResponses.orange.length}`);
