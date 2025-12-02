@@ -14,6 +14,7 @@ export interface Question {
     label: string;
   }[];
   motivation_learning_point?: string;
+  comment?: string; // Client-facing comment shown when answering questions
   // CSV fallback columns removed - now using score_examples array
   // Scoring guidance from Edit Questions
   score_examples?: Array<{

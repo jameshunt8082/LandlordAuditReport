@@ -32,6 +32,7 @@ export async function GET(
         qt.weight,
         qt.is_critical,
         qt.motivation_learning_point,
+        qt.comment,
         (
           SELECT json_agg(
             jsonb_build_object(
@@ -80,6 +81,7 @@ export async function GET(
       weight: parseFloat(row.weight),
       options: row.options || [],
       motivation_learning_point: row.motivation_learning_point,
+      comment: row.comment,
       score_examples: row.score_examples || [],
     }));
 
