@@ -13,17 +13,30 @@ const styles = StyleSheet.create({
   section: {
     marginBottom: 20,
   },
-  sectionIntro: {
-    fontSize: 11,
-    marginBottom: 15,
-    fontFamily: 'Helvetica-Oblique',
-    color: COLORS.mediumGray,
-  },
-  noQuestionsText: {
-    fontSize: 11,
-    color: COLORS.darkGreen,
+  tableHeader: {
+    flexDirection: 'row',
+    backgroundColor: COLORS.lightGray,
+    paddingVertical: 8,
+    paddingHorizontal: 4,
     marginTop: 10,
-    marginBottom: 20,
+    marginBottom: 0,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.mediumGray,
+  },
+  headerCell: {
+    fontSize: 9,
+    fontFamily: 'Helvetica-Bold',
+  },
+  questionHeaderCell: {
+    width: '35%',
+    paddingRight: 8,
+  },
+  answerHeaderCell: {
+    width: '35%',
+    paddingRight: 8,
+  },
+  commentHeaderCell: {
+    width: '30%',
   },
 });
 
@@ -37,7 +50,11 @@ export const DetailedResultsPage = ({
   redQuestions, 
   orangeQuestions, 
   greenQuestions
-}: DetailedResultsPageProps) => (
+}: DetailedResultsPageProps) => {
+  // Combine all questions into a single array
+  const allQuestions = [...redQuestions, ...orangeQuestions, ...greenQuestions];
+  
+  return (
   <Page size="A4" style={styles.page}>
     <PageHeader title="Landlord Risk Audit Report" />
     
@@ -45,90 +62,24 @@ export const DetailedResultsPage = ({
     
     <View style={styles.section}>
       <Text style={globalStyles.paragraph}>
-        This section provides a comprehensive breakdown of all audit questions, categorized by their scoring level. 
-        Each question includes the selected answer, any additional comments provided, and the associated score.
-      </Text>
-      
-      <Text style={globalStyles.paragraph}>
-        Questions are organized into three traffic light categories:
-      </Text>
-      
-      <Text style={globalStyles.bulletPoint}>
-        • <Text style={{ fontFamily: 'Helvetica-Bold', color: COLORS.red }}>Red (Low Scoring - 1-3)</Text>: 
-        Critical issues requiring immediate attention and corrective action.
-      </Text>
-      
-      <Text style={globalStyles.bulletPoint}>
-        • <Text style={{ fontFamily: 'Helvetica-Bold', color: COLORS.orange }}>Orange (Medium Scoring - 4-6)</Text>: 
-        Areas that need improvement to meet compliance standards.
-      </Text>
-      
-      <Text style={globalStyles.bulletPoint}>
-        • <Text style={{ fontFamily: 'Helvetica-Bold', color: COLORS.darkGreen }}>Green (High Scoring - 7-10)</Text>: 
-        Well-managed areas demonstrating good compliance practices.
+        This section provides a comprehensive breakdown of all audit questions. 
+        Each question includes the selected answer and any additional comments provided.
       </Text>
     </View>
     
-    {/* Red Questions Section */}
-    <Text style={globalStyles.h2}>Red (Low) Scoring Answers</Text>
+    {/* Table Header */}
+    <View style={styles.tableHeader}>
+      <Text style={[styles.headerCell, styles.questionHeaderCell]}>Question</Text>
+      <Text style={[styles.headerCell, styles.answerHeaderCell]}>Answer</Text>
+      <Text style={[styles.headerCell, styles.commentHeaderCell]}>Comment</Text>
+    </View>
     
-    {redQuestions.length === 0 ? (
-      <Text style={styles.noQuestionsText}>
-        ✓ Excellent! You have no critical issues. All questions scored above the red threshold.
-      </Text>
-    ) : (
-      <View>
-        <Text style={styles.sectionIntro}>
-          These questions received low scores (1-3) and require immediate attention. 
-          Critical compliance issues that could result in fines or legal action.
-        </Text>
-        
-        {redQuestions.map((question, idx) => (
-          <QuestionCard key={`red-${question.number}-${idx}`} question={question} />
-        ))}
-      </View>
-    )}
-    
-    {/* Orange Questions Section */}
-    <Text style={globalStyles.h2}>Orange (Medium) Scoring Statements</Text>
-    
-    {orangeQuestions.length === 0 ? (
-      <Text style={styles.noQuestionsText}>
-        ✓ Great! You have no medium-level issues. All questions scored either high (green) or are addressed above.
-      </Text>
-    ) : (
-      <View>
-        <Text style={styles.sectionIntro}>
-          These questions received medium scores (4-6) and should be improved. 
-          Areas that need attention to avoid potential legal issues.
-        </Text>
-        
-        {orangeQuestions.map((question, idx) => (
-          <QuestionCard key={`orange-${question.number}-${idx}`} question={question} />
-        ))}
-      </View>
-    )}
-    
-    {/* Green Questions Section */}
-    <Text style={globalStyles.h2}>Green (High) Scoring Answers</Text>
-    
-    {greenQuestions.length === 0 ? (
-      <Text style={styles.noQuestionsText}>
-        No green-scoring answers recorded.
-      </Text>
-    ) : (
-      <View>
-        <Text style={styles.sectionIntro}>
-          These questions received high scores (7-10) and demonstrate good compliance practices. 
-          Well-managed areas that serve as examples of proper procedures.
-        </Text>
-        
-        {greenQuestions.map((question, idx) => (
-          <QuestionCard key={`green-${question.number}-${idx}`} question={question} />
-        ))}
-      </View>
-    )}
+    {/* All Questions in Table Format */}
+    {allQuestions.map((question, idx) => (
+      <QuestionCard key={`question-${question.number}-${idx}`} question={question} />
+    ))}
     
     <PageFooter />
   </Page>
-);
+  );
+};
