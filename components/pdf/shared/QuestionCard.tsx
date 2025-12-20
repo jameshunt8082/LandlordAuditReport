@@ -1,51 +1,33 @@
 // Question Card Component for Detailed Results
 import { View, Text, StyleSheet } from '@react-pdf/renderer';
-import { TrafficLight } from './TrafficLight';
 import { COLORS } from '@/lib/pdf/styles';
 
 const styles = StyleSheet.create({
-  card: {
-    marginTop: 8,
-    marginBottom: 23,
-    paddingBottom: 5,
-  },
-  row: {
+  tableRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.lightGray,
-    paddingVertical: 5,
+    borderBottomWidth: 0.5,
+    borderBottomColor: COLORS.mediumGray,
+    paddingVertical: 6,
+    paddingHorizontal: 4,
+    alignItems: 'flex-start',
   },
-  questionNumber: {
-    width: 50,
-    fontSize: 11,
-    fontFamily: 'Helvetica-Bold',
-    lineHeight: 1,
-  },
-  questionText: {
-    flex: 1,
-    fontSize: 11,
-    lineHeight: 1,
-  },
-  scoreIcon: {
-    width: 75,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  metadata: {
+  questionCell: {
+    width: '35%',
     fontSize: 9,
-    color: COLORS.lightBlue,
-    marginTop: 5,
+    lineHeight: 1.3,
+    paddingRight: 8,
   },
-  sectionLabel: {
-    fontSize: 10,
-    fontFamily: 'Helvetica-Bold',
-    marginTop: 10,
-    marginBottom: 3,
+  answerCell: {
+    width: '35%',
+    fontSize: 9,
+    lineHeight: 1.3,
+    paddingRight: 8,
   },
-  contentText: {
-    fontSize: 11,
-    marginLeft: 15,
+  commentCell: {
+    width: '30%',
+    fontSize: 9,
+    lineHeight: 1.3,
+    color: COLORS.mediumGray,
   },
 });
 
@@ -65,32 +47,10 @@ interface QuestionCardProps {
 }
 
 export const QuestionCard = ({ question }: QuestionCardProps) => (
-  <View style={styles.card} wrap={false}>
-    {/* Question Header Row */}
-    <View style={styles.row}>
-      <Text style={styles.questionNumber}>Q{question.number}</Text>
-      <Text style={styles.questionText}>{question.questionText}</Text>
-      <View style={styles.scoreIcon}>
-        <TrafficLight color={question.color} size={14} />
-      </View>
-    </View>
-    
-    {/* Metadata */}
-    <Text style={styles.metadata}>
-      Category: {question.category} | Subcategory: {question.subcategory}
-    </Text>
-    
-    {/* Answer Section */}
-    <Text style={styles.sectionLabel}>Answer:</Text>
-    <Text style={styles.contentText}>• {question.answer}</Text>
-    
-    {/* Comment Section (if exists) */}
-    {question.comment ? (
-      <View>
-        <Text style={styles.sectionLabel}>Comment:</Text>
-        <Text style={styles.contentText}>• {question.comment}</Text>
-      </View>
-    ) : null}
+  <View style={styles.tableRow} wrap={false}>
+    <Text style={styles.questionCell}>{question.questionText}</Text>
+    <Text style={styles.answerCell}>{question.answer}</Text>
+    <Text style={styles.commentCell}>{question.comment || ''}</Text>
   </View>
 );
 
