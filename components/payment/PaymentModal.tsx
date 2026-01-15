@@ -59,10 +59,14 @@ export function PaymentModal({ isOpen, onClose, service }: PaymentModalProps) {
     };
 
     const handleSubmit = () => {
-        // Placeholder for Stripe integration
-        console.log("Payment submitted:", { service, formData });
-        alert("Payment integration coming soon! This is a frontend demo.");
-        onClose();
+        try {
+            // Placeholder for Stripe integration
+            // Implement secure payment processing here without logging sensitive user data.
+        } catch (error) {
+            // TODO: Provide user-friendly error feedback within the UI without exposing PII in logs.
+        } finally {
+            onClose();
+        }
     };
 
     const handleClose = () => {
