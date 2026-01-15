@@ -5,14 +5,7 @@ import { Button } from "@/components/ui/button";
 import { PricingSection } from "@/components/payment/PricingSection";
 
 export default async function HomePage() {
-  // Try to get session, but don't crash if auth is misconfigured
-  let session = null;
-  try {
-    session = await auth();
-  } catch (error) {
-    // Auth may fail if secret is missing - continue to show landing page
-    console.error("Auth check failed:", error);
-  }
+  const session = await auth();
 
   if (session) {
     redirect("/dashboard");
