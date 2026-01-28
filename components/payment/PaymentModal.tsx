@@ -146,7 +146,7 @@ export function PaymentModal({ isOpen, onClose, service }: PaymentModalProps) {
             <div className="space-y-6">
               <DialogHeader>
                 <DialogTitle>Your Details</DialogTitle>
-                <DialogDescription>We'll use this for the receipt.</DialogDescription>
+                <DialogDescription>We&apos;ll use this for the receipt.</DialogDescription>
               </DialogHeader>
               <div className="space-y-4">
                 <div className="space-y-2">

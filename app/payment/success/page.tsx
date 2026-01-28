@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, Suspense } from "react";
+import { useMemo, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Check, Loader2, AlertCircle } from "lucide-react";
@@ -9,31 +9,20 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 
 function PaymentSuccessContent() {
   const searchParams = useSearchParams();
-  const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
   const paymentIntent = searchParams.get("payment_intent");
   const redirectStatus = searchParams.get("redirect_status");
 
-  useEffect(() => {
+  // Derive status from URL params instead of using useEffect + setState
+  const status = useMemo(() => {
     if (redirectStatus === "succeeded") {
-      setStatus("success");
+      return "success";
     } else if (redirectStatus === "failed" || redirectStatus === "canceled") {
-      setStatus("error");
+      return "error";
     } else {
       // If no redirect_status, check if payment_intent exists
-      setStatus(paymentIntent ? "success" : "error");
+      return paymentIntent ? "success" : "error";
     }
   }, [paymentIntent, redirectStatus]);
-
-  if (status === "loading") {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
-          <p className="text-muted-foreground">Confirming your payment...</p>
-        </div>
-      </div>
-    );
-  }
 
   if (status === "error") {
     return (
@@ -76,7 +65,7 @@ function PaymentSuccessContent() {
               <strong>What happens next?</strong>
             </p>
             <ul className="mt-2 space-y-2 text-muted-foreground">
-              <li>• You'll receive a confirmation email shortly</li>
+              <li>• You&apos;ll receive a confirmation email shortly</li>
               <li>• The email will contain a link to complete your audit questionnaire</li>
               <li>• Complete the questionnaire to receive your detailed report</li>
             </ul>
