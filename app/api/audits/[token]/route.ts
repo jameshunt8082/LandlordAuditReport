@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { sql } from "@vercel/postgres";
 
-// Get audit by token (public route)
+// Get audit by token (public route - but only for paid audits)
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ token: string }> }
@@ -19,7 +19,9 @@ export async function GET(
         property_address,
         risk_audit_tier,
         conducted_by,
-        created_at
+        created_at,
+        payment_status,
+        service_type
       FROM audits
       WHERE token = ${token}
     `;
@@ -32,6 +34,14 @@ export async function GET(
     }
 
     const audit = result.rows[0];
+
+    // Only allow access if payment is confirmed (or created by auditor - no payment_status)
+    if (audit.payment_status && audit.payment_status !== "paid") {
+      return NextResponse.json(
+        { error: "Payment not confirmed for this audit" },
+        { status: 403 }
+      );
+    }
 
     // Don't allow access if already submitted
     if (audit.status !== "pending") {

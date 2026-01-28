@@ -24,7 +24,7 @@ export async function POST(
 
     // Get audit
     const auditResult = await sql`
-      SELECT id, status, risk_audit_tier FROM audits WHERE token = ${token}
+      SELECT id, status, risk_audit_tier, payment_status FROM audits WHERE token = ${token}
     `;
 
     if (auditResult.rows.length === 0) {
@@ -35,6 +35,14 @@ export async function POST(
     }
 
     const audit = auditResult.rows[0];
+
+    // Verify payment is confirmed (or created by auditor - no payment_status)
+    if (audit.payment_status && audit.payment_status !== "paid") {
+      return NextResponse.json(
+        { error: "Payment not confirmed for this audit" },
+        { status: 403 }
+      );
+    }
 
     if (audit.status !== "pending") {
       return NextResponse.json(
