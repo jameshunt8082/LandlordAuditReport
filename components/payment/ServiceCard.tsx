@@ -9,6 +9,7 @@ interface ServiceCardProps {
     description: string;
     features: readonly string[];
     isPopular?: boolean;
+    buttonText?: string;
     onSelect: () => void;
 }
 
@@ -18,6 +19,7 @@ export function ServiceCard({
     description,
     features,
     isPopular = false,
+    buttonText = "Get Started",
     onSelect,
 }: ServiceCardProps) {
     return (
@@ -91,7 +93,7 @@ export function ServiceCard({
                     }
         `}
             >
-                Get Started
+                {buttonText}
             </Button>
         </div>
     );

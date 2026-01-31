@@ -29,7 +29,7 @@ const SERVICES = {
             "Face-to-face consultation",
             "Priority support",
             "Detailed photographic evidence",
-            "Follow-up call within 7 days",
+            "Travel to London, Bristol, Cheltenham, Newquay included",
         ],
     },
 } as const;
@@ -53,17 +53,6 @@ export function PricingSection() {
     return (
         <section className="py-20 px-4">
             <div className="max-w-5xl mx-auto">
-                {/* Header */}
-                <div className="text-center mb-16">
-                    <h2 className="text-4xl font-bold text-foreground mb-4">
-                        Choose Your Audit Package
-                    </h2>
-                    <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                        Protect yourself from tenant disputes and ensure compliance with our
-                        comprehensive landlord risk audits.
-                    </p>
-                </div>
-
                 {/* Pricing Cards */}
                 <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
                     <ServiceCard
@@ -72,6 +61,7 @@ export function PricingSection() {
                         description={SERVICES.online.description}
                         features={SERVICES.online.features}
                         isPopular={true}
+                        buttonText="Take the questionnaire"
                         onSelect={() => handleSelectService("online")}
                     />
                     <ServiceCard
@@ -80,27 +70,9 @@ export function PricingSection() {
                         description={SERVICES.onsite.description}
                         features={SERVICES.onsite.features}
                         isPopular={false}
+                        buttonText="Book now"
                         onSelect={() => handleSelectService("onsite")}
                     />
-                </div>
-
-                {/* Trust Badges */}
-                <div className="mt-16 text-center">
-                    <p className="text-sm text-muted-foreground mb-4">Trusted by landlords across the UK</p>
-                    <div className="flex items-center justify-center gap-8 opacity-60">
-                        <div className="flex items-center gap-2">
-                            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                            </svg>
-                            <span className="text-sm font-medium">Secure Payments</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            <span className="text-sm font-medium">Money-back Guarantee</span>
-                        </div>
-                    </div>
                 </div>
             </div>
 
