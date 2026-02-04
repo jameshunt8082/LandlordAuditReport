@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback, Suspense } from "react";
+import { useState, useEffect, useMemo, useRef, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { Check, Loader2, AlertCircle } from "lucide-react";
@@ -26,10 +26,14 @@ function PaymentSuccessContent() {
   const paymentIntent = searchParams.get("payment_intent");
   const redirectStatus = searchParams.get("redirect_status");
 
-  const [pollCount, setPollCount] = useState(0);
   const [isPolling, setIsPolling] = useState(false);
   const [timedOut, setTimedOut] = useState(false);
   const [auditToken, setAuditToken] = useState<string | null>(null);
+  
+  // Use ref for poll count to avoid useEffect re-runs (fixes memory leak)
+  const pollCountRef = useRef(0);
+  // State to trigger restart when "Try Again" is clicked
+  const [restartTrigger, setRestartTrigger] = useState(0);
 
   // Max polling attempts (10 attempts * 2 seconds = 20 seconds max wait)
   const MAX_POLL_ATTEMPTS = 10;
@@ -46,50 +50,66 @@ function PaymentSuccessContent() {
     }
   }, [paymentIntent, redirectStatus]);
 
-  // Poll for audit creation
-  const pollForAudit = useCallback(async () => {
-    if (!paymentIntent || timedOut || auditToken) return;
-
-    try {
-      const response = await fetch(`/api/audits/by-payment/${paymentIntent}`);
-      const data: AuditLookupResponse = await response.json();
-
-      if (data.found && data.token) {
-        setAuditToken(data.token);
-        // Redirect to questionnaire
-        router.push(`/audit/${data.token}`);
-        return;
-      }
-
-      // Audit not found yet, increment poll count
-      setPollCount((prev) => prev + 1);
-    } catch (error) {
-      console.error("Error polling for audit:", error);
-      setPollCount((prev) => prev + 1);
-    }
-  }, [paymentIntent, timedOut, auditToken, router]);
-
-  // Start polling effect
+  // Start polling effect - stable dependencies, no memory leak
   useEffect(() => {
     if (status !== "success" || !paymentIntent) return;
 
-    // Initial poll
+    // Reset state for this polling session
+    pollCountRef.current = 0;
     setIsPolling(true);
-    pollForAudit();
+    setTimedOut(false);
+    setAuditToken(null);
 
-    // Set up polling interval
-    const intervalId = setInterval(() => {
-      if (pollCount >= MAX_POLL_ATTEMPTS) {
-        setTimedOut(true);
-        setIsPolling(false);
-        clearInterval(intervalId);
-        return;
+    const pollForAudit = async (): Promise<boolean> => {
+      try {
+        const response = await fetch(`/api/audits/by-payment/${paymentIntent}`);
+        const data: AuditLookupResponse = await response.json();
+
+        if (data.found && data.token) {
+          setAuditToken(data.token);
+          setIsPolling(false);
+          router.push(`/audit/${data.token}`);
+          return true; // Stop polling
+        }
+        return false; // Continue polling
+      } catch (error) {
+        console.error("Error polling for audit:", error);
+        return false; // Continue polling on error
       }
-      pollForAudit();
-    }, POLL_INTERVAL_MS);
+    };
 
-    return () => clearInterval(intervalId);
-  }, [status, paymentIntent, pollCount, pollForAudit]);
+    // Initial poll, then start interval after it completes
+    let intervalId: NodeJS.Timeout | null = null;
+    
+    const startPolling = async () => {
+      // Do initial poll
+      const found = await pollForAudit();
+      if (found) return; // Already redirecting, no need for interval
+      
+      // Start interval only after initial poll completes (prevents race condition)
+      intervalId = setInterval(async () => {
+        pollCountRef.current += 1;
+        
+        if (pollCountRef.current >= MAX_POLL_ATTEMPTS) {
+          setTimedOut(true);
+          setIsPolling(false);
+          if (intervalId) clearInterval(intervalId);
+          return;
+        }
+        
+        const found = await pollForAudit();
+        if (found && intervalId) {
+          clearInterval(intervalId);
+        }
+      }, POLL_INTERVAL_MS);
+    };
+
+    startPolling();
+
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, [status, paymentIntent, router, restartTrigger]); // restartTrigger allows "Try Again" to work
 
   // Error state
   if (status === "error") {
@@ -168,9 +188,8 @@ function PaymentSuccessContent() {
             <div className="flex flex-col gap-2">
               <Button 
                 onClick={() => {
-                  setTimedOut(false);
-                  setPollCount(0);
-                  setIsPolling(true);
+                  // Trigger useEffect to restart polling
+                  setRestartTrigger((prev) => prev + 1);
                 }}
                 variant="outline"
                 className="w-full"

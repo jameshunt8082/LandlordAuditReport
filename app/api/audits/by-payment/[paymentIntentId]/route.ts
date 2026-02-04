@@ -25,11 +25,22 @@ export async function GET(
       );
     }
 
-    // Query audit by payment_intent_id
+    // Validate paymentIntentId format (Stripe format: pi_xxx)
+    if (!paymentIntentId.match(/^pi_[a-zA-Z0-9]+$/)) {
+      return NextResponse.json(
+        { error: "Invalid payment intent format" },
+        { status: 400 }
+      );
+    }
+
+    // SECURITY: Only allow lookup within 5 minutes of payment creation
+    // This prevents enumeration attacks on older payment IDs
+    // After 5 minutes, users must use the email link instead
     const result = await sql`
       SELECT token, status, client_name, property_address
       FROM audits
       WHERE payment_intent_id = ${paymentIntentId}
+        AND created_at > NOW() - INTERVAL '5 minutes'
       LIMIT 1
     `;
 
