@@ -139,6 +139,41 @@ async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent) {
 
   } catch (error) {
     console.error("Failed to create audit from payment:", error);
+    
+    // Log failed payment for manual recovery
+    try {
+      await sql`
+        INSERT INTO failed_payments (
+          payment_intent_id,
+          customer_name,
+          customer_email,
+          property_address,
+          service_type,
+          payment_amount,
+          error_message,
+          created_at
+        )
+        VALUES (
+          ${paymentIntent.id},
+          ${customerName},
+          ${customerEmail},
+          ${propertyAddress},
+          ${serviceType},
+          ${paymentIntent.amount},
+          ${error instanceof Error ? error.message : 'Unknown error'},
+          NOW()
+        )
+        ON CONFLICT (payment_intent_id) DO UPDATE SET
+          retry_count = failed_payments.retry_count + 1,
+          last_retry_at = NOW(),
+          error_message = EXCLUDED.error_message
+      `;
+      console.log(`Logged failed payment ${paymentIntent.id} for recovery`);
+    } catch (logError) {
+      console.error("Failed to log failed payment:", logError);
+    }
+    
+    // Re-throw to trigger Stripe retry
     throw error;
   }
 }

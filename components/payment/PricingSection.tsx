@@ -58,9 +58,11 @@ export function PricingSection() {
                     <ServiceCard
                         title={SERVICES.online.title}
                         price={SERVICES.online.price}
+                        discountPrice={0}
                         description={SERVICES.online.description}
                         features={SERVICES.online.features}
                         isPopular={true}
+                        isBeta={true}
                         buttonText="Take the questionnaire"
                         onSelect={() => handleSelectService("online")}
                     />
@@ -70,6 +72,7 @@ export function PricingSection() {
                         description={SERVICES.onsite.description}
                         features={SERVICES.onsite.features}
                         isPopular={false}
+                        isComingSoon={true}
                         buttonText="Book now"
                         onSelect={() => handleSelectService("onsite")}
                     />
