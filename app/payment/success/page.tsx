@@ -23,6 +23,9 @@ interface AuditLookupResponse {
 function PaymentSuccessContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  
+  // Support both session_id (Checkout) and payment_intent (legacy/Elements)
+  const sessionId = searchParams.get("session_id");
   const paymentIntent = searchParams.get("payment_intent");
   const redirectStatus = searchParams.get("redirect_status");
 
@@ -30,6 +33,7 @@ function PaymentSuccessContent() {
   const [timedOut, setTimedOut] = useState(false);
   const [auditToken, setAuditToken] = useState<string | null>(null);
   const [hasNetworkError, setHasNetworkError] = useState(false);
+  const [resolvedPaymentIntent, setResolvedPaymentIntent] = useState<string | null>(paymentIntent);
   
   // Use ref for poll count to avoid useEffect re-runs (fixes memory leak)
   const pollCountRef = useRef(0);
@@ -41,8 +45,11 @@ function PaymentSuccessContent() {
   const MAX_POLL_ATTEMPTS = 10;
   const POLL_INTERVAL_MS = 2000;
 
-  // Derive initial status from URL params
+  // Derive initial status - session_id presence means Checkout success
   const status = useMemo(() => {
+    if (sessionId) {
+      return "success"; // Stripe Checkout always redirects on success
+    }
     if (redirectStatus === "succeeded") {
       return "success";
     } else if (redirectStatus === "failed" || redirectStatus === "canceled") {
@@ -50,11 +57,26 @@ function PaymentSuccessContent() {
     } else {
       return paymentIntent ? "success" : "error";
     }
-  }, [paymentIntent, redirectStatus]);
+  }, [sessionId, paymentIntent, redirectStatus]);
+
+  // For Checkout flow: fetch session to get payment_intent_id
+  useEffect(() => {
+    if (sessionId && !resolvedPaymentIntent) {
+      // Fetch session details to get payment_intent
+      fetch(`/api/stripe/session/${sessionId}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.paymentIntentId) {
+            setResolvedPaymentIntent(data.paymentIntentId);
+          }
+        })
+        .catch(err => console.error("Failed to fetch session:", err));
+    }
+  }, [sessionId, resolvedPaymentIntent]);
 
   // Start polling effect - stable dependencies, no memory leak
   useEffect(() => {
-    if (status !== "success" || !paymentIntent) return;
+    if (status !== "success" || !resolvedPaymentIntent) return;
 
     // Reset state for this polling session
     pollCountRef.current = 0;
@@ -66,7 +88,7 @@ function PaymentSuccessContent() {
 
     const pollForAudit = async (): Promise<boolean> => {
       try {
-        const response = await fetch(`/api/audits/by-payment/${paymentIntent}`);
+        const response = await fetch(`/api/audits/by-payment/${resolvedPaymentIntent}`);
         const data: AuditLookupResponse = await response.json();
 
         // Reset error count on successful response

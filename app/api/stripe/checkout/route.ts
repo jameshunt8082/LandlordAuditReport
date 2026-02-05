@@ -6,14 +6,13 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 });
 
 // Service pricing configuration (amounts in pence for GBP)
-const SERVICE_PRICES: Record<string, number> = {
-  online: 5000,  // £50.00
-  onsite: 50000, // £500.00
+const SERVICE_PRICES: Record<string, { amount: number; name: string }> = {
+  online: { amount: 5000, name: "Online Risk Audit" },    // £50.00
+  onsite: { amount: 50000, name: "On-Site Risk Audit" },  // £500.00
 };
 
 export async function POST(req: NextRequest) {
   try {
-    // Accept both camelCase and snake_case field names for compatibility
     const body = await req.json();
     const serviceId = body.serviceId || body.serviceID;
     const email = body.email;
@@ -29,31 +28,57 @@ export async function POST(req: NextRequest) {
     }
 
     // Validate service type and get price
-    const amount = SERVICE_PRICES[serviceId];
-    if (!amount) {
+    const service = SERVICE_PRICES[serviceId];
+    if (!service) {
       return NextResponse.json(
         { error: `Invalid service type: ${serviceId}. Valid options: online, onsite` },
         { status: 400 }
       );
     }
 
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: amount,
-      currency: "gbp",
-      receipt_email: email,
+    // Get the origin for redirect URLs
+    const origin = req.headers.get("origin") || "https://landlord-audit.vercel.app";
+
+    // Create Stripe Checkout Session (redirect-based)
+    const session = await stripe.checkout.sessions.create({
+      mode: "payment",
+      customer_email: email,
+      success_url: `${origin}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${origin}?canceled=true`,
+      line_items: [
+        {
+          price_data: {
+            currency: "gbp",
+            unit_amount: service.amount,
+            product_data: {
+              name: service.name,
+              description: `Property audit for: ${address}`,
+            },
+          },
+          quantity: 1,
+        },
+      ],
       metadata: {
         customer_name: name,
         customer_email: email,
         property_address: address,
         service_type: serviceId,
       },
-      automatic_payment_methods: { enabled: true },
+      // Pre-fill customer name in Stripe Checkout
+      payment_intent_data: {
+        metadata: {
+          customer_name: name,
+          customer_email: email,
+          property_address: address,
+          service_type: serviceId,
+        },
+      },
     });
 
     return NextResponse.json(
       { 
-        clientSecret: paymentIntent.client_secret,
-        paymentIntentId: paymentIntent.id,
+        url: session.url,
+        sessionId: session.id,
       },
       { status: 200 }
     );

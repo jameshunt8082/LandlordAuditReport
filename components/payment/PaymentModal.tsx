@@ -4,10 +4,9 @@ import { useState } from "react";
 import {
   ArrowLeft,
   ArrowRight,
-  Check,
-  CreditCard,
   User,
   Loader2,
+  ExternalLink,
 } from "lucide-react";
 import {
   Dialog,
@@ -19,16 +18,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-
-// --- NEW IMPORTS ---
-import { loadStripe } from "@stripe/stripe-js";
-import { Elements } from "@stripe/react-stripe-js";
-import { CheckoutForm } from "./CheckoutForm"; // Import the file we created above
-
-// Initialize Stripe outside the component for performance
-const stripePromise = loadStripe(
-  process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!,
-);
 
 interface Service {
   id: string;
@@ -44,207 +33,163 @@ interface PaymentModalProps {
   service: Service;
 }
 
-const STEPS = [
-  { id: 1, title: "Details", icon: User },
-  { id: 2, title: "Payment", icon: CreditCard },
-];
-
 export function PaymentModal({ isOpen, onClose, service }: PaymentModalProps) {
-  const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     propertyAddress: "",
   });
-
-  // New states for Stripe
-  const [clientSecret, setClientSecret] = useState<string | null>(null);
-  const [isLoadingSecret, setIsLoadingSecret] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+    setError(null); // Clear error on input change
   };
 
-  // Main transition logic
-  const handleNext = async () => {
-    if (currentStep === 1) {
-      // Moving from Details to Payment - fetch Stripe client secret
-      setIsLoadingSecret(true);
-      try {
-        const res = await fetch("/api/stripe/checkout", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            serviceId: service.id,
-            email: formData.email,
-            name: formData.name,
-            address: formData.propertyAddress,
-          }),
-        });
+  const isFormValid = formData.name && formData.email && formData.propertyAddress;
 
-        const data = await res.json();
+  // Redirect to Stripe Checkout
+  const handleCheckout = async () => {
+    if (!isFormValid) {
+      setError("Please fill in all fields.");
+      return;
+    }
 
-        if (data.clientSecret) {
-          setClientSecret(data.clientSecret);
-          setCurrentStep(2); // Move to Payment step
-        } else {
-          alert(data.error || "Error initiating payment. Please try again.");
-        }
-      } catch (error) {
-        console.error(error);
-        alert("Connection error.");
-      } finally {
-        setIsLoadingSecret(false);
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const res = await fetch("/api/stripe/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          serviceId: service.id,
+          email: formData.email,
+          name: formData.name,
+          address: formData.propertyAddress,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (data.url) {
+        // Redirect to Stripe Checkout
+        window.location.href = data.url;
+      } else {
+        setError(data.error || "Error initiating payment. Please try again.");
       }
+    } catch (err) {
+      console.error(err);
+      setError("Connection error. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleBack = () => {
-    if (currentStep > 1) setCurrentStep(currentStep - 1);
-  };
-
   const handleClose = () => {
-    setCurrentStep(1);
     setFormData({ name: "", email: "", propertyAddress: "" });
-    setClientSecret(null); // Clear the secret on close
+    setError(null);
     onClose();
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[500px] p-0 overflow-hidden">
-        {/* Steps Header (Kept same as original) */}
+        {/* Header */}
         <div className="bg-muted/50 px-6 py-4 border-b">
-          <div className="flex items-center justify-between">
-            {STEPS.map((step, index) => {
-              const Icon = step.icon;
-              const isActive = currentStep === step.id;
-              const isCompleted = currentStep > step.id;
-              return (
-                <div key={step.id} className="flex items-center">
-                  <div className="flex flex-col items-center">
-                    <div
-                      className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 ${isCompleted ? "bg-green-600 text-white" : isActive ? "bg-primary text-primary-foreground ring-4 ring-primary/20" : "bg-muted text-muted-foreground"}`}
-                    >
-                      {isCompleted ? (
-                        <Check className="w-5 h-5" />
-                      ) : (
-                        <Icon className="w-5 h-5" />
-                      )}
-                    </div>
-                    <span
-                      className={`text-xs mt-1 font-medium ${isActive ? "text-foreground" : "text-muted-foreground"}`}
-                    >
-                      {step.title}
-                    </span>
-                  </div>
-                  {index < STEPS.length - 1 && (
-                    <div
-                      className={`w-16 h-0.5 mx-2 transition-colors duration-300 ${isCompleted ? "bg-green-600" : "bg-muted"}`}
-                    />
-                  )}
-                </div>
-              );
-            })}
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center">
+              <User className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="font-medium">Your Details</p>
+              <p className="text-xs text-muted-foreground">Step 1 of 2 • Payment via Stripe</p>
+            </div>
           </div>
         </div>
 
         {/* Content */}
         <div className="p-6">
-          {/* Step 1: Details */}
-          {currentStep === 1 && (
-            <div className="space-y-6">
-              <DialogHeader>
-                <DialogTitle>Your Details</DialogTitle>
-                <DialogDescription>
-                  We need this for your property details and receipt details.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label>Full Name</Label>
-                  <Input
-                    name="name"
-                    value={formData.name}
-                    onChange={handleInputChange}
-                    placeholder="John Doe"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Email</Label>
-                  <Input
-                    name="email"
-                    value={formData.email}
-                    onChange={handleInputChange}
-                    placeholder="john@example.com"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Property Address</Label>
-                  <Input
-                    name="propertyAddress"
-                    value={formData.propertyAddress}
-                    onChange={handleInputChange}
-                    placeholder="123 Street"
-                  />
-                </div>
+          <DialogHeader className="mb-4">
+            <DialogTitle>Enter Your Information</DialogTitle>
+            <DialogDescription>
+              We need this for your property details and receipt. You&apos;ll be redirected to Stripe for secure payment.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Full Name</Label>
+              <Input
+                name="name"
+                value={formData.name}
+                onChange={handleInputChange}
+                placeholder="John Doe"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Email</Label>
+              <Input
+                name="email"
+                type="email"
+                value={formData.email}
+                onChange={handleInputChange}
+                placeholder="john@example.com"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Property Address</Label>
+              <Input
+                name="propertyAddress"
+                value={formData.propertyAddress}
+                onChange={handleInputChange}
+                placeholder="123 Main Street, London"
+              />
+            </div>
+
+            {error && (
+              <div className="p-3 text-sm text-red-500 bg-red-50 rounded-md">
+                {error}
+              </div>
+            )}
+
+            {/* Price Summary */}
+            <div className="bg-muted/50 rounded-lg p-4 mt-4">
+              <div className="flex justify-between items-center">
+                <span className="text-muted-foreground">Service</span>
+                <span className="font-medium">{service.title}</span>
+              </div>
+              <div className="flex justify-between items-center mt-2">
+                <span className="text-muted-foreground">Amount</span>
+                <span className="font-bold text-lg">£{service.price}</span>
               </div>
             </div>
-          )}
-
-          {/* Step 2: Payment (WITH STRIPE) */}
-          {currentStep === 2 && clientSecret && (
-            <div className="space-y-4">
-              <DialogHeader>
-                <DialogTitle>Secure Payment</DialogTitle>
-                <DialogDescription>Powered by Stripe SSL.</DialogDescription>
-              </DialogHeader>
-
-              {/* The Provider wraps ONLY the form */}
-              <Elements
-                stripe={stripePromise}
-                options={{ clientSecret, appearance: { theme: "stripe" } }}
-              >
-                <CheckoutForm price={service.price} />
-              </Elements>
-            </div>
-          )}
+          </div>
         </div>
 
-        {/* Footer Actions */}
-        {/* We only show the Footer in step 1. In step 2, the pay button is INSIDE CheckoutForm */}
-        {currentStep < 2 && (
-          <div className="px-6 py-4 border-t bg-muted/30 flex justify-between">
-            <Button
-              variant="ghost"
-              onClick={handleBack}
-              disabled={currentStep === 1}
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" /> Back
-            </Button>
-            <Button onClick={handleNext} disabled={isLoadingSecret}>
-              {isLoadingSecret ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Preparing...
-                </>
-              ) : (
-                <>
-                  Continue <ArrowRight className="w-4 h-4 ml-2" />
-                </>
-              )}
-            </Button>
-          </div>
-        )}
-
-        {/* Simple back button for step 2, in case the user wants to cancel */}
-        {currentStep === 2 && (
-          <div className="px-6 py-2 border-t bg-muted/10">
-            <Button variant="ghost" onClick={handleBack} size="sm">
-              <ArrowLeft className="w-4 h-4 mr-2" /> Change Details
-            </Button>
-          </div>
-        )}
+        {/* Footer */}
+        <div className="px-6 py-4 border-t bg-muted/30 flex justify-between">
+          <Button variant="ghost" onClick={handleClose}>
+            <ArrowLeft className="w-4 h-4 mr-2" /> Cancel
+          </Button>
+          <Button 
+            onClick={handleCheckout} 
+            disabled={isLoading || !isFormValid}
+            className="bg-gradient-to-r from-blue-600 to-purple-600"
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Redirecting...
+              </>
+            ) : (
+              <>
+                Continue to Payment <ExternalLink className="w-4 h-4 ml-2" />
+              </>
+            )}
+          </Button>
+        </div>
       </DialogContent>
     </Dialog>
   );

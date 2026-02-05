@@ -44,6 +44,19 @@ export async function POST(req: NextRequest) {
 
     // Handle the event
     switch (event.type) {
+      case "checkout.session.completed": {
+        // Stripe Checkout redirect flow completed
+        const session = event.data.object as Stripe.Checkout.Session;
+        console.log(`Checkout session completed: ${session.id}`);
+        
+        // If payment was successful, the payment_intent.succeeded will also fire
+        // and handle audit creation. But we log here for visibility.
+        if (session.payment_status === "paid" && session.payment_intent) {
+          console.log(`Session ${session.id} paid via PaymentIntent ${session.payment_intent}`);
+        }
+        break;
+      }
+
       case "payment_intent.succeeded": {
         const paymentIntent = event.data.object as Stripe.PaymentIntent;
         await handlePaymentSuccess(paymentIntent);
