@@ -63,16 +63,15 @@ export async function POST(
 
     // Fetch ALL questions that could be valid for this tier (active + inactive)
     // This allows audits to be completed even if questions were added/removed
-    // Note: Using IN clause instead of ANY for Vercel Postgres compatibility
-    const questionIds = submittedQuestionIds.map((id) => `'${id}'`).join(",");
-    const allQuestionsResult = await sql.query(`
+    // SECURITY FIX: Use parameterized queries to prevent SQL injection
+    const allQuestionsResult = await sql`
       SELECT 
         qt.question_number as id,
         qt.is_active,
         qt.applicable_tiers
       FROM question_templates qt
-      WHERE qt.question_number IN (${questionIds})
-    `);
+      WHERE qt.question_number = ANY(${submittedQuestionIds as unknown as string})
+    `;
 
     const validQuestionMap = new Map(
       allQuestionsResult.rows.map((q) => [q.id, q]),
