@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { sql } from "@vercel/postgres";
 import { randomUUID } from "crypto";
+import { sendQuestionnaireEmail } from "@/lib/email";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2025-02-24.acacia",
@@ -147,8 +148,19 @@ async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent) {
 
     console.log(`Created audit ${result.rows[0].id} for payment ${paymentIntent.id}`);
 
-    // TODO: Send email notification to customer with audit link
-    // await sendAuditEmail(customerEmail, customerName, result.rows[0].token);
+    // Send email notification to customer with audit link
+    try {
+      await sendQuestionnaireEmail(
+        customerEmail,
+        result.rows[0].token,
+        customerName,
+        propertyAddress
+      );
+      console.log(`Sent questionnaire email to ${customerEmail}`);
+    } catch (emailError) {
+      // Log email error but don't fail the webhook - audit was created successfully
+      console.error(`Failed to send email to ${customerEmail}:`, emailError);
+    }
 
   } catch (error) {
     console.error("Failed to create audit from payment:", error);
