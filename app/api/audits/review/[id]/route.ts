@@ -44,21 +44,14 @@ export async function GET(
 
     const responses = responsesResult.rows as any[];
 
-    // Fetch questions for this tier
-    let questionsForScoring;
+    // Fetch questions for this tier (direct import to avoid SSRF risk)
+    let questionsForScoring: any[];
     try {
-      const questionsResponse = await fetch(
-        `${process.env.NEXTAUTH_URL}/api/questions/for-tier/${audit.risk_audit_tier}`
-      );
-      if (!questionsResponse.ok) {
-        console.warn(`Failed to fetch questions from API: ${questionsResponse.status}`);
-        questionsForScoring = getQuestionsByTier(audit.risk_audit_tier);
-      } else {
-        const questionsData = await questionsResponse.json();
-        questionsForScoring = questionsData.questions || getQuestionsByTier(audit.risk_audit_tier);
-      }
+      // SECURITY FIX: Use direct function import instead of HTTP fetch
+      const { getQuestionsForTier } = await import('@/lib/questions-db');
+      questionsForScoring = await getQuestionsForTier(audit.risk_audit_tier);
     } catch (error: any) {
-      console.warn("Error fetching questions from API, using fallback:", error?.message);
+      console.warn("Error fetching questions from DB, using fallback:", error?.message);
       // Fallback to static questions
       questionsForScoring = getQuestionsByTier(audit.risk_audit_tier);
     }

@@ -80,32 +80,22 @@ export async function GET(
     }
     
     
-    // 5. Fetch questions for this tier
+    // 5. Fetch questions for this tier (direct import to avoid SSRF risk)
     console.log(`[PDF] Step 5: Fetching questions for tier ${audit.risk_audit_tier}...`);
     let questions: any[] = [];
     try {
-      const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
-      const questionsUrl = `${baseUrl}/api/questions/for-tier/${audit.risk_audit_tier}`;
-      console.log(`[PDF] Fetching from: ${questionsUrl}`);
-      
-      const questionsResponse = await fetch(questionsUrl);
-      console.log(`[PDF] Questions API response status: ${questionsResponse.status}`);
-      
-      if (questionsResponse.ok) {
-        const questionsData = await questionsResponse.json();
-        questions = questionsData.questions || [];
-        console.log(`[PDF] Fetched ${questions.length} questions from API`);
-      } else {
-        const errorText = await questionsResponse.text();
-        console.error(`[PDF] Questions API error: ${errorText}`);
-      }
+      // SECURITY FIX: Use direct function import instead of HTTP fetch
+      // This eliminates SSRF risk and reduces latency
+      const { getQuestionsForTier } = await import('@/lib/questions-db');
+      questions = await getQuestionsForTier(audit.risk_audit_tier);
+      console.log(`[PDF] Fetched ${questions.length} questions from DB`);
     } catch (error) {
-      console.error('[PDF] Error fetching questions:', error);
+      console.error('[PDF] Error fetching questions from DB:', error);
       console.error('[PDF] Error details:', (error as Error).message);
     }
     
     if (questions.length === 0) {
-      console.log('[PDF] No questions from API, falling back to static questions...');
+      console.log('[PDF] No questions from DB, falling back to static questions...');
       const { getQuestionsByTier } = await import('@/lib/questions');
       questions = getQuestionsByTier(audit.risk_audit_tier);
       console.log(`[PDF] Loaded ${questions.length} static fallback questions`);
