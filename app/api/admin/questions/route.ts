@@ -37,6 +37,11 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    // RBAC: Only admin users can access admin endpoints
+    if (session.user.role !== 'admin') {
+      return NextResponse.json({ error: "Forbidden: Admin access required" }, { status: 403 });
+    }
+
     const { searchParams } = new URL(request.url);
     const category = searchParams.get("category");
     const tier = searchParams.get("tier");
@@ -149,6 +154,12 @@ export async function POST(request: Request) {
     if (!session?.user?.id) {
       console.log('❌ Unauthorized - no session');
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // RBAC: Only admin users can access admin endpoints
+    if (session.user.role !== 'admin') {
+      console.log('❌ Forbidden - not admin');
+      return NextResponse.json({ error: "Forbidden: Admin access required" }, { status: 403 });
     }
     console.log('✅ Session validated:', session.user.id);
 

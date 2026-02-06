@@ -20,6 +20,11 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    // RBAC: Only admin users can access admin endpoints
+    if (session.user.role !== 'admin') {
+      return NextResponse.json({ error: "Forbidden: Admin access required" }, { status: 403 });
+    }
+
     const result = await sql`
       SELECT 
         id,
@@ -58,6 +63,11 @@ export async function POST(req: NextRequest) {
 
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // RBAC: Only admin users can access admin endpoints
+    if (session.user.role !== 'admin') {
+      return NextResponse.json({ error: "Forbidden: Admin access required" }, { status: 403 });
     }
 
     const { paymentIntentId } = await req.json();

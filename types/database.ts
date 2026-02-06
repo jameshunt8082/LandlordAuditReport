@@ -1,10 +1,13 @@
 // Database Types
 
+export type UserRole = 'auditor' | 'admin';
+
 export interface User {
   id: number;
   name: string;
   email: string;
   password_hash: string;
+  role: UserRole;
   created_at: Date;
 }
 
