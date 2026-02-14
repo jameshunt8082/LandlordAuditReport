@@ -398,10 +398,32 @@ function generateServiceRecommendations(
   
   // Service mapping for low scores (≤ 4)
   const serviceMap: Record<string, { service: string; tier: string }> = {
+    // Documentation
     'Certificates': { service: 'Certificate Management Service', tier: 'Tier 1' },
     'Tenant Manuals & Documents': { service: 'Documentation Package', tier: 'Tier 2' },
     'Council Required Documents': { service: 'Compliance Review', tier: 'Tier 3' },
     'Tenant Responsibilities': { service: 'Tenancy Agreement Review', tier: 'Tier 2' },
+    'Tenant Critical Information': { service: 'Safety Information Package', tier: 'Tier 2' },
+    'Fire Safety Documentation': { service: 'Fire Safety Compliance Review', tier: 'Tier 1' },
+    'Landlord Alert/Reminder System': { service: 'Compliance Monitoring System', tier: 'Tier 2' },
+    'Tenant Information': { service: 'Data Protection Review', tier: 'Tier 2' },
+    // Communication
+    'Day-to-day Communication System': { service: 'Communication Tracking System', tier: 'Tier 2' },
+    'Behaviour Reporting Procedure/System': { service: 'Dispute Management Framework', tier: 'Tier 3' },
+    'Cleanliness': { service: 'HMO Management Framework', tier: 'Tier 3' },
+    'Product Buying': { service: 'HMO Management Framework', tier: 'Tier 3' },
+    'Rotas': { service: 'HMO Management Framework', tier: 'Tier 3' },
+    // Evidence Gathering
+    'Room Inspections Log': { service: 'Inspection Protocol Service', tier: 'Tier 3' },
+    'Room Inventory': { service: 'Inventory Management Service', tier: 'Tier 2' },
+    "Tenant's Property Repair Logging System": { service: 'Maintenance System Setup', tier: 'Tier 3' },
+    'Property Maintenance Log': { service: 'Maintenance System Setup', tier: 'Tier 3' },
+    'Shared Spaces Inspection Log': { service: 'Inspection Protocol Service', tier: 'Tier 3' },
+    'External Property Inspection Log': { service: 'Onsite Survey', tier: 'Tier 4' },
+    'Tenant Behaviour Log': { service: 'Dispute Management Framework', tier: 'Tier 3' },
+    'Fire and Accident Log & Safety Action List': { service: 'Fire Safety Compliance Review', tier: 'Tier 1' },
+    'Condensation Prevention Procedures': { service: 'Property Maintenance Advisory', tier: 'Tier 3' },
+    // Legacy keys (backward compatibility)
     'Rent & Financial Tracking': { service: 'Financial Management System', tier: 'Tier 2' },
     'Complaint & Repair Systems': { service: 'Maintenance System Setup', tier: 'Tier 3' },
     'Written Records': { service: 'Record-Keeping System', tier: 'Tier 2' },
