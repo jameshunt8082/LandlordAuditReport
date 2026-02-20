@@ -761,9 +761,9 @@ function AuditFormContent({
                       </CardDescription>
                     )}
                     {question.comment && (
-                      <div className="mt-3 bg-blue-50 border border-blue-200 rounded-lg p-3">
-                        <p className="text-sm text-blue-800">
-                          <span className="font-semibold">💡 Guidance:</span> {question.comment}
+                      <div className="mt-3">
+                        <p className="text-sm text-gray-600">
+                          <span className="font-semibold text-gray-900">Guidance:</span> {question.comment}
                         </p>
                       </div>
                     )}
