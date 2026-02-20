@@ -2,10 +2,14 @@
 """Full DB verification for questionnaire overhaul."""
 import json
 import urllib.request
-import ssl
+import os
 
 NEON_URL = "https://ep-icy-violet-abk4m75a-pooler.eu-west-2.aws.neon.tech/sql"
-CONN_STR = "postgresql://neondb_owner:npg_Bk1QcmNKV0yS@ep-icy-violet-abk4m75a-pooler.eu-west-2.aws.neon.tech/neondb?sslmode=require"
+CONN_STR = os.environ.get("POSTGRES_URL")
+
+if not CONN_STR:
+    print("ERROR: POSTGRES_URL environment variable is not set.")
+    exit(1)
 
 def run_sql(query, params=None):
     body = {"query": query}

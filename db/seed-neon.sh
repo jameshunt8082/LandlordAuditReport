@@ -3,9 +3,12 @@
 # This bypasses the broken node_modules issue
 
 NEON_URL="https://ep-icy-violet-abk4m75a-pooler.eu-west-2.aws.neon.tech/sql"
-CONN_STR="postgresql://neondb_owner:npg_Bk1QcmNKV0yS@ep-icy-violet-abk4m75a-pooler.eu-west-2.aws.neon.tech/neondb?sslmode=require"
+CONN_STR="${POSTGRES_URL}"
 
-run_sql() {
+if [ -z "$CONN_STR" ]; then
+  echo "ERROR: POSTGRES_URL environment variable is not set."
+  exit 1
+fi
   local sql="$1"
   curl -s "$NEON_URL" \
     -H "Neon-Connection-String: $CONN_STR" \
