@@ -185,7 +185,7 @@ function getReasonForLowScore(question: QuestionResponseData): string {
   
   // Fallback: Generic reason based on score/color
   if (question.color === 'red') {
-    return `Statutory requirement issue identified in ${question.subcategory || question.category}.`;
+    return `Legal requirement issue identified in ${question.subcategory || question.category}.`;
   } else if (question.color === 'orange') {
     return `Improvement needed in ${question.subcategory || question.category}.`;
   }
@@ -231,7 +231,7 @@ function getRecommendedAction(question: QuestionResponseData, data?: ReportData)
   
   // Fallback 3: Generic action based on score/color
   if (question.color === 'red') {
-    return `Immediately address this statutory requirement issue. Professional legal consultation is strongly recommended to avoid prosecution and financial penalties.`;
+    return `Immediately address this legal requirement issue. Professional legal consultation is strongly recommended to avoid prosecution and financial penalties.`;
   } else if (question.color === 'orange') {
     return `Take action to improve compliance in this area. Consider implementing best practices to reduce risk.`;
   }

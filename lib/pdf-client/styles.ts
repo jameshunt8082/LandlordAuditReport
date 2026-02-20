@@ -114,7 +114,7 @@ export function getTrafficLightColor(score: number): 'red' | 'orange' | 'green' 
  */
 export function getPriorityColor(priority: 1 | 2 | 3 | 4): string {
   switch (priority) {
-    case 1: return COLORS.red;      // STATUTORY REQUIREMENT
+    case 1: return COLORS.red;      // CRITICAL COMPLIANCE
     case 2: return '#dc2626';       // HIGH (red-600 for consistency with UI)
     case 3: return COLORS.orange;   // MEDIUM (orange for medium-term actions)
     case 4: return COLORS.mediumGray; // LOW
@@ -126,7 +126,7 @@ export function getPriorityColor(priority: 1 | 2 | 3 | 4): string {
  */
 export function getPriorityLabel(priority: 1 | 2 | 3 | 4): string {
   switch (priority) {
-    case 1: return 'STATUTORY REQUIREMENT';
+    case 1: return 'CRITICAL COMPLIANCE';
     case 2: return 'HIGH';
     case 3: return 'MEDIUM';
     case 4: return 'LOW';

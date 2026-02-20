@@ -45,7 +45,7 @@ export async function criticalFindings(doc: jsPDF, data: ReportData): Promise<vo
   doc.setFontSize(FONTS.h1.size);
   doc.setFont('helvetica', FONTS.h1.style);
   setTextColorHex(doc, COLORS.primaryGreen);
-  doc.text('Statutory Requirement Findings Summary', startX, yPos);
+  doc.text('Critical Compliance Findings Summary', startX, yPos);
   yPos += 20;
   
   const criticalQuestions = data.questionResponses.red;
@@ -72,7 +72,7 @@ export async function criticalFindings(doc: jsPDF, data: ReportData): Promise<vo
     doc.setFont('helvetica', 'bold');
     setTextColorHex(doc, COLORS.red);
     doc.text(
-      `URGENT: ${criticalQuestions.length} Statutory Requirement Non-Compliance Issue${criticalQuestions.length > 1 ? 's' : ''} Identified`,
+      `URGENT: ${criticalQuestions.length} Legal Requirement Non-Compliance Issue${criticalQuestions.length > 1 ? 's' : ''} Identified`,
       startX + 8,
       alertY + 10
     );
@@ -194,12 +194,12 @@ export async function criticalFindings(doc: jsPDF, data: ReportData): Promise<vo
     doc.setFontSize(13);
     doc.setFont('helvetica', 'bold');
     setTextColorHex(doc, COLORS.darkGreen);
-    doc.text('No Statutory Requirement Non-Compliance Issues Identified', startX + 10, yPos + 12);
+    doc.text('No Legal Requirement Non-Compliance Issues Identified', startX + 10, yPos + 12);
     
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
     setTextColorHex(doc, COLORS.black);
-    const successText = 'This audit identified no statutory requirement violations. You are not currently exposed to immediate prosecution or prohibition orders. Continue maintaining current compliance standards and address medium-priority items within recommended timeframes.';
+    const successText = 'This audit identified no legal requirement violations. You are not currently exposed to immediate prosecution or prohibition orders. Continue maintaining current compliance standards and address medium-priority items within recommended timeframes.';
     const wrappedSuccess = doc.splitTextToSize(successText, contentWidth - 20);
     doc.text(wrappedSuccess, startX + 10, yPos + 20);
   }

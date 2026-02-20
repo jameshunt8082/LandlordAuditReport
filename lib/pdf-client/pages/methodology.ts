@@ -30,7 +30,7 @@ export async function methodology(doc: jsPDF, data: ReportData): Promise<void> {
   doc.setFont('helvetica', 'normal');
   setTextColorHex(doc, COLORS.black);
   
-  const methodologyText = 'This compliance audit was conducted using a structured assessment framework designed to evaluate landlord practices against statutory requirements and industry best practices. The methodology ensures comprehensive coverage of statutory requirement compliance areas while maintaining objectivity and consistency.';
+  const methodologyText = 'This compliance audit was conducted using a structured assessment framework designed to evaluate landlord practices against legal requirements and industry best practices. The methodology ensures comprehensive coverage of legal requirement compliance areas while maintaining objectivity and consistency.';
   const wrapped = doc.splitTextToSize(methodologyText, contentWidth);
   doc.text(wrapped, startX, yPos);
   yPos += wrapped.length * 4 + 15;

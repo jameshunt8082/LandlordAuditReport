@@ -18,7 +18,7 @@ const TIER_DEFINITIONS: TierInfo[] = [
   {
     number: 0,
     title: 'Minimal Risk',
-    description: 'Exemplary compliance. All statutory requirements met with robust systems in place. Minimal probability of enforcement action or tenant tribunal claims.',
+    description: 'Exemplary compliance. All legal requirements met with robust systems in place. Minimal probability of enforcement action or tenant tribunal claims.',
     implication: 'Insurance: Premium rates. Lending: Favorable terms. Licensing: Fast-track renewals.',
     color: COLORS.darkGreen,
   },
@@ -39,7 +39,7 @@ const TIER_DEFINITIONS: TierInfo[] = [
   {
     number: 3,
     title: 'High Risk',
-    description: 'Poor compliance with multiple statutory requirement gaps. Immediate action required. High probability of financial penalties and enforcement intervention.',
+    description: 'Poor compliance with multiple legal requirement gaps. Immediate action required. High probability of financial penalties and enforcement intervention.',
     implication: 'Insurance: Premium loading or coverage restrictions. Lending: Difficult. Licensing: At risk.',
     color: COLORS.orange,
   },

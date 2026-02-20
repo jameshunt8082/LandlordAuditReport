@@ -70,12 +70,12 @@ export async function complianceStatus(doc: jsPDF, data: ReportData): Promise<vo
     doc.setFontSize(12);
     doc.setFont('helvetica', 'bold');
     setTextColorHex(doc, COLORS.red);
-    doc.text(`STATUTORY REQUIREMENT: ${statutoryViolations} Statutory Violations`, startX + 10, yPos + 10);
+    doc.text(`CRITICAL COMPLIANCE: ${statutoryViolations} Legal Violations`, startX + 10, yPos + 10);
     
     doc.setFontSize(9);
     doc.setFont('helvetica', 'normal');
     setTextColorHex(doc, COLORS.black);
-    const warningText = 'You are currently in violation of statutory requirements. This exposes you to immediate prosecution, substantial fines, and potential prohibition from letting. Urgent remediation within 7 days is required. Professional legal advice is strongly recommended.';
+    const warningText = 'You are currently in violation of legal requirements. This exposes you to immediate prosecution, substantial fines, and potential prohibition from letting. Urgent remediation within 7 days is required. Professional legal advice is strongly recommended.';
     const wrapped = doc.splitTextToSize(warningText, contentWidth - 20);
     doc.text(wrapped, startX + 10, yPos + 18);
     

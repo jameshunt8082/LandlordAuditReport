@@ -56,21 +56,21 @@ export async function actionPlan(doc: jsPDF, data: ReportData): Promise<void> {
     doc.setFontSize(11);
     doc.setFont('helvetica', 'bold');
     setTextColorHex(doc, COLORS.red);
-    doc.text('⚠ STATUTORY REQUIREMENT - IMMEDIATE ACTIONS (0-7 Days)', startX + 8, headerY + 8);
+    doc.text('⚠ CRITICAL COMPLIANCE - IMMEDIATE ACTIONS (0-7 Days)', startX + 8, headerY + 8);
     yPos += 12;
     
     // Description
     doc.setFontSize(10);
     doc.setFont('helvetica', 'italic');
     setTextColorHex(doc, COLORS.red);
-    doc.text('Statutory requirement compliance issues exposing you to immediate fines or prosecution.', startX + 8, yPos + 5);
+    doc.text('Legal requirement compliance issues exposing you to immediate fines or prosecution.', startX + 8, yPos + 5);
     yPos += 10;
     
     // Action items (using score_examples from question_score_examples table)
     immediateActions.forEach((q, idx) => {
       // Use reason_text from score_examples for left column, report_action for right column
       const lowExample = q.score_examples?.find(ex => ex.score_level === 'low');
-      const leftColumnText = lowExample?.reason_text || 'Statutory requirement issue identified';
+      const leftColumnText = lowExample?.reason_text || 'Legal requirement issue identified';
       const rightColumnText = lowExample?.report_action || `${q.subcategory}: ${q.questionText}`;
       
       const leftWrapped = doc.splitTextToSize(leftColumnText, 65);
