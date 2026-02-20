@@ -14,7 +14,7 @@ export interface User {
 export type AuditStatus = 'pending' | 'submitted' | 'completed';
 export type RiskAuditTier = 'tier_0' | 'tier_1' | 'tier_2' | 'tier_3' | 'tier_4';
 export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'refunded';
-export type ServiceType = 'online' | 'onsite';
+export type ServiceType = 'online';
 
 export interface Audit {
   id: number;

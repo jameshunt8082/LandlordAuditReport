@@ -9,7 +9,6 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 // Service pricing configuration (amounts in pence for GBP)
 const SERVICE_PRICES: Record<string, { amount: number; name: string }> = {
   online: { amount: 5000, name: "Online Risk Audit" },    // £50.00
-  onsite: { amount: 50000, name: "On-Site Risk Audit" },  // £500.00
 };
 
 export async function POST(req: NextRequest) {
@@ -46,7 +45,7 @@ export async function POST(req: NextRequest) {
     const service = SERVICE_PRICES[serviceId];
     if (!service) {
       return NextResponse.json(
-        { error: `Invalid service type: ${serviceId}. Valid options: online, onsite` },
+        { error: `Invalid service type: ${serviceId}. Valid option: online` },
         { status: 400 }
       );
     }

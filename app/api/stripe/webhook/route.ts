@@ -97,7 +97,7 @@ async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent) {
   }
 
   // Determine tier based on service type
-  const tier = serviceType === "onsite" ? "tier_1" : "tier_0";
+  const tier = "tier_0";
 
   // Generate unique token for the audit
   const token = randomUUID();

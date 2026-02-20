@@ -114,7 +114,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Create the audit
-    const tier = payment.service_type === "onsite" ? "tier_1" : "tier_0";
+    const tier = "tier_0";
     const token = randomUUID();
 
     await sql`

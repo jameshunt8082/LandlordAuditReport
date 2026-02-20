@@ -17,21 +17,7 @@ const SERVICES = {
             "Traffic light compliance indicators",
             "Actionable recommendations",
         ],
-    },
-    onsite: {
-        id: "onsite",
-        title: "Onsite Audit",
-        price: 500,
-        description: "In-person inspection by a qualified auditor",
-        features: [
-            "Everything in Online Audit",
-            "Physical property inspection",
-            "Face-to-face consultation",
-            "Priority support",
-            "Detailed photographic evidence",
-            "Travel to London, Bristol, Cheltenham, Newquay included",
-        ],
-    },
+    }
 } as const;
 
 type ServiceId = keyof typeof SERVICES;
@@ -54,7 +40,7 @@ export function PricingSection() {
         <section className="py-20 px-4">
             <div className="max-w-5xl mx-auto">
                 {/* Pricing Cards */}
-                <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+                <div className="max-w-md mx-auto">
                     <ServiceCard
                         title={SERVICES.online.title}
                         price={SERVICES.online.price}
@@ -65,16 +51,6 @@ export function PricingSection() {
                         isBeta={true}
                         buttonText="Take the questionnaire"
                         onSelect={() => handleSelectService("online")}
-                    />
-                    <ServiceCard
-                        title={SERVICES.onsite.title}
-                        price={SERVICES.onsite.price}
-                        description={SERVICES.onsite.description}
-                        features={SERVICES.onsite.features}
-                        isPopular={false}
-                        isComingSoon={true}
-                        buttonText="Book now"
-                        onSelect={() => handleSelectService("onsite")}
                     />
                 </div>
             </div>
