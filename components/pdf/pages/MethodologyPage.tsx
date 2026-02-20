@@ -66,8 +66,9 @@ export const MethodologyPage = ({ data, auditScope }: MethodologyPageProps) => {
       <View style={styles.section}>
         <Text style={globalStyles.paragraph}>
           This compliance audit was conducted using a structured assessment framework designed to evaluate 
-          landlord practices against statutory requirements and industry best practices. The methodology 
-          ensures comprehensive coverage of critical compliance areas while maintaining objectivity and consistency.
+                    landlord practices against legal requirements and industry best practices. The methodology 
+                    ensures comprehensive coverage of critical compliance areas while maintaining objectivity 
+                    and consistency.
         </Text>
       </View>
       
@@ -142,7 +143,7 @@ export const MethodologyPage = ({ data, auditScope }: MethodologyPageProps) => {
             <Text style={styles.bullet}>•</Text>
             <Text style={styles.bulletText}>
               <Text style={{ fontFamily: 'Helvetica-Bold' }}>Critical Questions: </Text>
-              Weighted 2.0x (statutory requirements with prosecution risk)
+              Weighted 2.0x (legal requirements with prosecution risk)
             </Text>
           </View>
           <View style={styles.bulletItem}>
@@ -177,7 +178,7 @@ export const MethodologyPage = ({ data, auditScope }: MethodologyPageProps) => {
             <Text style={styles.bullet}>•</Text>
             <Text style={styles.bulletText}>
               This report does not constitute legal advice. Professional legal counsel should be 
-              consulted for interpretation of specific statutory requirements.
+              consulted for interpretation of specific legal requirements.
             </Text>
           </View>
           <View style={styles.bulletItem}>

@@ -174,7 +174,7 @@ export const ComplianceStatusPage = ({ data }: ComplianceStatusPageProps) => {
       
       <View style={globalStyles.paragraph}>
         <Text>
-          This section assesses compliance with statutory requirements. These are not recommendations 
+          This section assesses compliance with legal requirements. These are not recommendations 
           but legal obligations. Non-compliance exposes you to prosecution, fines, and property prohibition orders.
         </Text>
       </View>
@@ -195,10 +195,10 @@ export const ComplianceStatusPage = ({ data }: ComplianceStatusPageProps) => {
         </Text>
       </View>
       
-      {/* Statutory Requirements Table */}
+      {/* Legal Requirements Table */}
       <View style={styles.statusTable}>
         <View style={styles.tableHeader}>
-          <Text style={[styles.tableHeaderText, { width: '45%' }]}>Statutory Requirement</Text>
+          <Text style={[styles.tableHeaderText, { width: '45%' }]}>Legal Requirement</Text>
           <Text style={[styles.tableHeaderText, { width: '15%', textAlign: 'center' }]}>Status</Text>
           <Text style={[styles.tableHeaderText, { width: '40%' }]}>Action Required</Text>
         </View>
@@ -229,10 +229,10 @@ export const ComplianceStatusPage = ({ data }: ComplianceStatusPageProps) => {
       {failCount > 0 ? (
         <View style={[styles.riskBox, { borderLeftColor: COLORS.red }]} wrap={false}>
           <Text style={[styles.riskTitle, { color: COLORS.red }]}>
-            ⚠ CRITICAL: {failCount} Statutory Violation{failCount > 1 ? 's' : ''}
+            ⚠ CRITICAL: {failCount} Legal Violation{failCount > 1 ? 's' : ''}
           </Text>
           <Text style={styles.riskText}>
-            You are currently in violation of {failCount} statutory requirement{failCount > 1 ? 's' : ''}. 
+            You are currently in violation of {failCount} legal requirement{failCount > 1 ? 's' : ''}. 
             This exposes you to immediate prosecution, substantial fines, and potential prohibition from letting. 
             Urgent remediation within 7 days is required. Professional legal advice is strongly recommended.
           </Text>

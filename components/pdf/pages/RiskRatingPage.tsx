@@ -87,7 +87,7 @@ export const RiskRatingPage = () => (
         <Text style={[styles.tierTitle, { color: COLORS.darkGreen }]}>Minimal Risk</Text>
       </View>
       <Text style={styles.tierDescription}>
-        Exemplary compliance. All statutory requirements met with robust systems in place. 
+        Exemplary compliance. All legal requirements met with robust systems in place. 
         Minimal probability of enforcement action or tenant tribunal claims.
       </Text>
       <Text style={styles.tierImplication}>
@@ -102,7 +102,7 @@ export const RiskRatingPage = () => (
         <Text style={[styles.tierTitle, { color: COLORS.darkGreen }]}>Low Risk</Text>
       </View>
       <Text style={styles.tierDescription}>
-        Good compliance with minor improvements needed. Statutory requirements met. 
+        Good compliance with minor improvements needed. Legal requirements met. 
         Low probability of legal issues if current practices maintained.
       </Text>
       <Text style={styles.tierImplication}>
@@ -117,7 +117,7 @@ export const RiskRatingPage = () => (
         <Text style={[styles.tierTitle, { color: COLORS.orange }]}>Moderate Risk</Text>
       </View>
       <Text style={styles.tierDescription}>
-        Compliance gaps present. Some statutory requirements not fully met. 
+        Compliance gaps present. Some legal requirements not fully met. 
         Moderate probability of enforcement action if improvements not made within 90 days.
       </Text>
       <Text style={styles.tierImplication}>
@@ -132,7 +132,7 @@ export const RiskRatingPage = () => (
         <Text style={[styles.tierTitle, { color: COLORS.red }]}>High Risk</Text>
       </View>
       <Text style={styles.tierDescription}>
-        Significant compliance failures. Multiple statutory violations. 
+        Significant compliance failures. Multiple legal violations. 
         High probability of enforcement action, tribunal claims, and financial penalties.
       </Text>
       <Text style={styles.tierImplication}>

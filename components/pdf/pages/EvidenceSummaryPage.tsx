@@ -145,7 +145,7 @@ export const EvidenceSummaryPage = ({ data }: EvidenceSummaryPageProps) => {
       <View style={globalStyles.paragraph}>
         <Text>
           This audit evaluated {totalQuestions} compliance areas across three primary categories. 
-          Each area was assessed against statutory requirements and industry best practices. 
+          Each area was assessed against legal requirements and industry best practices. 
           Responses were validated for consistency and completeness.
         </Text>
       </View>
