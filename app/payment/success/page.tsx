@@ -34,6 +34,7 @@ function PaymentSuccessContent() {
   const [auditToken, setAuditToken] = useState<string | null>(null);
   const [hasNetworkError, setHasNetworkError] = useState(false);
   const [resolvedPaymentIntent, setResolvedPaymentIntent] = useState<string | null>(paymentIntent);
+  const [redirectCountdown, setRedirectCountdown] = useState<number | null>(null);
   
   // Use ref for poll count to avoid useEffect re-runs (fixes memory leak)
   const pollCountRef = useRef(0);
@@ -98,7 +99,8 @@ function PaymentSuccessContent() {
         if (data.found && data.token) {
           setAuditToken(data.token);
           setIsPolling(false);
-          router.push(`/audit/${data.token}`);
+          // Start countdown instead of immediate redirect
+          setRedirectCountdown(5);
           return true; // Stop polling
         }
         return false; // Continue polling
@@ -146,6 +148,22 @@ function PaymentSuccessContent() {
     };
   }, [status, paymentIntent, router, restartTrigger]); // restartTrigger allows "Try Again" to work
 
+  // Handle countdown and redirect
+  useEffect(() => {
+    if (redirectCountdown === null || !auditToken) return;
+
+    if (redirectCountdown === 0) {
+      router.push(`/audit/${auditToken}`);
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setRedirectCountdown((prev) => (prev !== null ? prev - 1 : null));
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [redirectCountdown, auditToken, router]);
+
   // Error state
   if (status === "error") {
     return (
@@ -170,8 +188,8 @@ function PaymentSuccessContent() {
     );
   }
 
-  // Polling / Loading state
-  if (isPolling && !timedOut && !auditToken) {
+  // Polling / Loading state / Countdown
+  if ((isPolling && !timedOut && !auditToken) || (auditToken && redirectCountdown !== null)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
         <Card className="max-w-md w-full">
@@ -181,15 +199,38 @@ function PaymentSuccessContent() {
             </div>
             <CardTitle className="text-2xl">Payment Successful!</CardTitle>
             <CardDescription>
-              Preparing your questionnaire...
+              {redirectCountdown !== null 
+                ? "Questionnaire ready!" 
+                : "Preparing your questionnaire..."}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex flex-col items-center gap-4">
-              <Loader2 className="w-8 h-8 animate-spin text-primary" />
-              <p className="text-sm text-muted-foreground text-center">
-                You&apos;ll be redirected to your audit questionnaire in a moment.
-              </p>
+              {redirectCountdown !== null ? (
+                <>
+                  <div className="text-center space-y-2">
+                    <p className="text-lg font-medium text-green-700">
+                      We've sent a link to your email.
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      Redirecting you to the questionnaire in <span className="font-bold text-primary">{redirectCountdown}</span> seconds...
+                    </p>
+                  </div>
+                  <Button 
+                    onClick={() => router.push(`/audit/${auditToken}`)}
+                    className="mt-2"
+                  >
+                    Go Now
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                  <p className="text-sm text-muted-foreground text-center">
+                    You&apos;ll be redirected to your audit questionnaire in a moment.
+                  </p>
+                </>
+              )}
             </div>
           </CardContent>
         </Card>
