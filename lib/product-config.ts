@@ -42,7 +42,6 @@ export const PRODUCT_DISPLAY_CONFIG: Record<string, ProductDisplayConfig> = {
       "Actionable recommendations",
     ],
     isPopular: true,
-    isBeta: true,
     buttonText: "Take the questionnaire",
     order: 1,
   },

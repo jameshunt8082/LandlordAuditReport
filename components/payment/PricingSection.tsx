@@ -122,7 +122,6 @@ export function PricingSection() {
                             key={service.id}
                             title={service.title}
                             price={service.price}
-                            discountPrice={service.isBeta ? 0 : undefined}
                             description={service.description}
                             features={service.features}
                             isPopular={service.isPopular}
