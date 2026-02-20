@@ -142,13 +142,29 @@ export async function sendQuestionnaireEmail(
   const transporter = getTransporter();
   const from = process.env.SMTP_FROM || 'Landlord Audit <no-reply@landlordaudit.com>';
 
-  await transporter.sendMail({
-    from,
-    to,
-    subject: 'Your Landlord Audit Questionnaire is Ready',
-    text: textContent,
-    html: htmlContent,
-  });
+  console.log(`[Email] Sending to ${to} from ${from}...`);
+
+  try {
+    const info = await transporter.sendMail({
+      from,
+      to,
+      subject: 'Your Landlord Audit Questionnaire is Ready',
+      text: textContent,
+      html: htmlContent,
+    });
+    console.log(`[Email] Message sent successfully: ${info.messageId}`);
+  } catch (error) {
+    console.error(`[Email] Failed to send email:`, error);
+    // Provide more specific error details for common SMTP issues
+    if (error instanceof Error) {
+      if (error.message.includes('EAUTH')) {
+        console.error('[Email] SMTP Authentication failed - check SMTP_USER and SMTP_PASSWORD');
+      } else if (error.message.includes('ECONNREFUSED')) {
+        console.error('[Email] SMTP Connection refused - check SMTP_HOST and SMTP_PORT');
+      }
+    }
+    throw error; // Re-throw to allow handler to log/handle it
+  }
 }
 
 /**

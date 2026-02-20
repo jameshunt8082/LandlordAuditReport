@@ -48,164 +48,233 @@ export async function POST(req: NextRequest) {
       case "checkout.session.completed": {
         // Stripe Checkout redirect flow completed
         const session = event.data.object as Stripe.Checkout.Session;
-        console.log(`Checkout session completed: ${session.id}`);
+        console.log(`[Webhook] Checkout session completed: ${session.id}`);
         
         // Ensure payment was successful before provisioning
         if (session.payment_status === "paid") {
-          console.log(`Session ${session.id} paid, processing audit creation`);
+          console.log(`[Webhook] Session ${session.id} paid, processing fulfillment`);
           await handlePaymentSuccess(session);
         } else {
-          console.log(`Session ${session.id} completed but payment status is: ${session.payment_status}`);
+          console.log(`[Webhook] Session ${session.id} completed but payment status is: ${session.payment_status}`);
         }
         break;
       }
 
+      case "checkout.session.async_payment_succeeded": {
+        const session = event.data.object as Stripe.Checkout.Session;
+        console.log(`[Webhook] Async payment succeeded for session: ${session.id}`);
+        await handlePaymentSuccess(session);
+        break;
+      }
+
       case "payment_intent.succeeded": {
-        // We log this, but handle the actual provisioning in checkout.session.completed
-        // because Checkout Sessions hold the metadata in the new flow
         const paymentIntent = event.data.object as Stripe.PaymentIntent;
-        console.log(`PaymentIntent succeeded: ${paymentIntent.id}`);
+        console.log(`[Webhook] PaymentIntent succeeded: ${paymentIntent.id}`);
+        
+        // Fallback fulfillment check: If it was a checkout session, handle it
+        if (paymentIntent.metadata?.checkout_session_id) {
+          try {
+            const sessions = await stripe.checkout.sessions.list({
+              payment_intent: paymentIntent.id,
+              limit: 1,
+            });
+            if (sessions.data.length > 0) {
+              console.log(`[Webhook] Found session ${sessions.data[0].id} for PI ${paymentIntent.id}, triggering fulfillment`);
+              await handlePaymentSuccess(sessions.data[0]);
+            }
+          } catch (err) {
+            console.error("[Webhook] Error during PI fallback fulfillment:", err);
+          }
+        }
         break;
       }
 
       case "payment_intent.payment_failed": {
         const paymentIntent = event.data.object as Stripe.PaymentIntent;
-        console.log(`Payment failed for ${paymentIntent.id}:`, paymentIntent.last_payment_error?.message);
+        console.log(`[Webhook] Payment failed for ${paymentIntent.id}:`, paymentIntent.last_payment_error?.message);
         break;
       }
 
       default:
-        console.log(`Unhandled event type: ${event.type}`);
+        console.log(`[Webhook] Unhandled event type: ${event.type}`);
     }
 
     return NextResponse.json({ received: true }, { status: 200 });
   } catch (error: unknown) {
-    console.error("Webhook error:", error);
+    console.error("[Webhook] Global error:", error);
     const message = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
 
 async function handlePaymentSuccess(session: Stripe.Checkout.Session) {
-  const metadata = session.metadata || {};
+  console.log(`[Fulfillment] Processing session: ${session.id}`);
   
-  // Extract customer information from session metadata
-  const customerName = metadata.customer_name;
-  const customerEmail = metadata.customer_email;
-  const propertyAddress = metadata.property_address;
-  const serviceType = metadata.service_type;
-
+  // Extract metadata from session or associated payment intent
+  let metadata = session.metadata || {};
+  
   // The Payment Intent ID is attached to the session
-  // For checkout sessions this is a string, handle typing safely
   const paymentIntentId = typeof session.payment_intent === 'string' 
     ? session.payment_intent 
     : session.payment_intent?.id || session.id;
 
-  if (!customerName || !customerEmail || !propertyAddress || !serviceType) {
-    console.error("Missing metadata in checkout session:", session.id, "Metadata:", metadata);
+  // If session metadata is empty, try to fetch from payment intent
+  if (Object.keys(metadata).length === 0 && typeof session.payment_intent === 'string') {
+    try {
+      const pi = await stripe.paymentIntents.retrieve(session.payment_intent);
+      if (pi.metadata && Object.keys(pi.metadata).length > 0) {
+        console.log(`[Fulfillment] Found metadata on payment intent ${pi.id}`);
+        metadata = pi.metadata;
+      }
+    } catch (err) {
+      console.error("[Fulfillment] Error retrieving PI metadata:", err);
+    }
+  }
+  
+  // Extract customer information with multiple fallbacks
+  const customerEmail = 
+    metadata.customer_email || 
+    session.customer_details?.email || 
+    session.customer_email;
+    
+  const customerName = 
+    metadata.customer_name || 
+    session.customer_details?.name || 
+    "Valued Customer";
+
+  const propertyAddress = metadata.property_address || "Address not provided";
+  const serviceType = metadata.service_type || "online";
+
+  console.log(`[Fulfillment] Data: Email=${customerEmail}, Name=${customerName}, Address=${propertyAddress}, Service=${serviceType}`);
+
+  if (!customerEmail) {
+    console.error("[Fulfillment] CRITICAL: Missing customer email for session:", session.id);
     return;
   }
 
   // Determine tier based on service type
   const tier = "tier_0";
 
-  // Generate unique token for the audit
-  const token = randomUUID();
-
   try {
     // Check if audit already exists for this payment intent or session
     const existingAudit = await sql`
-      SELECT id FROM audits WHERE payment_intent_id = ${paymentIntentId}
+      SELECT id, token, status FROM audits WHERE payment_intent_id = ${paymentIntentId}
     `;
+
+    let auditToken: string;
+    let auditId: number;
 
     if (existingAudit.rows.length > 0) {
-      console.log(`Audit already exists for payment ${paymentIntentId}`);
-      return;
-    }
-
-    // Create the audit record
-    const result = await sql`
-      INSERT INTO audits (
-        auditor_id,
-        token,
-        client_name,
-        landlord_email,
-        property_address,
-        risk_audit_tier,
-        conducted_by,
-        payment_intent_id,
-        payment_status,
-        payment_amount,
-        service_type,
-        created_at
-      )
-      VALUES (
-        NULL,
-        ${token},
-        ${customerName},
-        ${customerEmail},
-        ${propertyAddress},
-        ${tier},
-        'Self-Service',
-        ${paymentIntentId},
-        'paid',
-        ${session.amount_total || 5000},
-        ${serviceType},
-        NOW()
-      )
-      RETURNING id, token
-    `;
-
-    console.log(`Created audit ${result.rows[0].id} for payment ${paymentIntentId}`);
-
-    // Send email notification to customer with audit link
-    try {
-      await sendQuestionnaireEmail(
-        customerEmail,
-        result.rows[0].token,
-        customerName,
-        propertyAddress
-      );
-      console.log(`Sent questionnaire email to ${customerEmail}`);
-    } catch (emailError) {
-      // Log email error but don't fail the webhook - audit was created successfully
-      console.error(`Failed to send email to ${customerEmail}:`, emailError);
-    }
-
-  } catch (error) {
-    console.error("Failed to create audit from payment:", error);
-    
-    // Log failed payment for manual recovery
-    try {
-      await sql`
-        INSERT INTO failed_payments (
-          payment_intent_id,
-          customer_name,
-          customer_email,
+      auditId = existingAudit.rows[0].id;
+      auditToken = existingAudit.rows[0].token;
+      console.log(`[Fulfillment] Audit already exists for payment ${paymentIntentId} (Audit ID: ${auditId})`);
+      
+      // If audit exists but is still pending, we retry the email 
+      // (This handles cases where the webhook retries after a previous email failure)
+      if (existingAudit.rows[0].status !== 'pending') {
+        console.log(`[Fulfillment] Audit ${auditId} is already ${existingAudit.rows[0].status}, skipping email retry`);
+        return;
+      }
+      
+      console.log(`[Fulfillment] Audit ${auditId} is still pending, attempting to send email again...`);
+    } else {
+      // Create the audit record
+      console.log("[Fulfillment] Creating new audit record in database...");
+      const token = randomUUID();
+      const result = await sql`
+        INSERT INTO audits (
+          auditor_id,
+          token,
+          client_name,
+          landlord_email,
           property_address,
-          service_type,
+          risk_audit_tier,
+          conducted_by,
+          payment_intent_id,
+          payment_status,
           payment_amount,
-          error_message,
+          service_type,
           created_at
         )
         VALUES (
-          ${paymentIntentId},
+          NULL,
+          ${token},
           ${customerName},
           ${customerEmail},
           ${propertyAddress},
-          ${serviceType},
+          ${tier},
+          'Self-Service',
+          ${paymentIntentId},
+          'paid',
           ${session.amount_total || 5000},
-          ${error instanceof Error ? error.message : 'Unknown error'},
+          ${serviceType},
           NOW()
         )
-        ON CONFLICT (payment_intent_id) DO UPDATE SET
-          retry_count = failed_payments.retry_count + 1,
-          last_retry_at = NOW(),
-          error_message = EXCLUDED.error_message
+        RETURNING id, token
       `;
-      console.log(`Logged failed payment ${paymentIntentId} for recovery`);
+
+      auditId = result.rows[0].id;
+      auditToken = result.rows[0].token;
+      console.log(`[Fulfillment] Successfully created audit ${auditId}`);
+    }
+
+    // Send email notification to customer with audit link
+    console.log(`[Fulfillment] Attempting to send email to ${customerEmail}...`);
+    try {
+      await sendQuestionnaireEmail(
+        customerEmail,
+        auditToken,
+        customerName,
+        propertyAddress
+      );
+      console.log(`[Fulfillment] Questionnaire email sent successfully to ${customerEmail}`);
+    } catch (emailError) {
+      // Log email error but don't fail the webhook - audit was created successfully
+      console.error(`[Fulfillment] ERROR: Failed to send email to ${customerEmail}:`, emailError);
+      // We don't re-throw here because we want to return 200 to Stripe since the audit is created
+      // Stripe will only retry if we return a 5xx error.
+      // If we want Stripe to retry the email, we SHOULD re-throw.
+      // Given the "email functionality not working" report, let's re-throw to trigger retries.
+      throw emailError;
+    }
+
+  } catch (error) {
+    console.error("[Fulfillment] ERROR: Failed to process fulfillment:", error);
+    
+    // Log failed payment for manual recovery (only if it's not already in audits)
+    try {
+      const checkAudit = await sql`SELECT id FROM audits WHERE payment_intent_id = ${paymentIntentId}`;
+      if (checkAudit.rows.length === 0) {
+        await sql`
+          INSERT INTO failed_payments (
+            payment_intent_id,
+            customer_name,
+            customer_email,
+            property_address,
+            service_type,
+            payment_amount,
+            error_message,
+            created_at
+          )
+          VALUES (
+            ${paymentIntentId},
+            ${customerName},
+            ${customerEmail},
+            ${propertyAddress},
+            ${serviceType},
+            ${session.amount_total || 5000},
+            ${error instanceof Error ? error.message : 'Unknown error'},
+            NOW()
+          )
+          ON CONFLICT (payment_intent_id) DO UPDATE SET
+            retry_count = failed_payments.retry_count + 1,
+            last_retry_at = NOW(),
+            error_message = EXCLUDED.error_message
+        `;
+        console.log(`[Fulfillment] Logged failed payment ${paymentIntentId} for manual recovery`);
+      }
     } catch (logError) {
-      console.error("Failed to log failed payment:", logError);
+      console.error("[Fulfillment] CRITICAL ERROR: Failed to log failed payment:", logError);
     }
     
     // Re-throw to trigger Stripe retry
