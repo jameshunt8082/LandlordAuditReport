@@ -1,9 +1,9 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import nodemailer from 'nodemailer';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
     const host = process.env.SMTP_HOST;
     const port = Number(process.env.SMTP_PORT) || 587;
@@ -38,9 +38,27 @@ export async function GET() {
 
     try {
       await transporter.verify();
+
+      // If 'sendTo' query parameter is provided, perform a real send test
+      const sendTo = req.nextUrl.searchParams.get('sendTo');
+      if (sendTo) {
+        const info = await transporter.sendMail({
+          from: from || 'Landlord Audit <no-reply@landlordaudit.com>',
+          to: sendTo,
+          subject: 'Test Email from Landlord Audit Diagnostic',
+          text: 'If you are receiving this, the SMTP send route is fully working.',
+        });
+        return NextResponse.json({
+          success: true,
+          message: `SMTP connection verified AND test email successfully sent to ${sendTo}`,
+          config: configStatus,
+          info,
+        });
+      }
+
       return NextResponse.json({
         success: true,
-        message: 'SMTP connection successfully verified',
+        message: 'SMTP connection successfully verified (add ?sendTo=email@domain.com to actually test sending)',
         config: configStatus,
       });
     } catch (verifyError) {
