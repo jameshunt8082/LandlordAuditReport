@@ -93,22 +93,28 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const result = await sql`
-      SELECT 
-        id,
-        token,
-        status,
-        client_name,
-        landlord_email,
-        property_address,
-        risk_audit_tier,
-        conducted_by,
-        created_at,
-        submitted_at
-      FROM audits
-      WHERE auditor_id = ${session.user.id}
-      ORDER BY created_at DESC
-    `;
+    // Admin users see all audits (including self-service with NULL auditor_id)
+    // Regular auditors see only their own
+    const isAdmin = session.user.role === 'admin';
+
+    const result = isAdmin
+      ? await sql`
+          SELECT 
+            id, token, status, client_name, landlord_email,
+            property_address, risk_audit_tier, conducted_by,
+            created_at, submitted_at
+          FROM audits
+          ORDER BY created_at DESC
+        `
+      : await sql`
+          SELECT 
+            id, token, status, client_name, landlord_email,
+            property_address, risk_audit_tier, conducted_by,
+            created_at, submitted_at
+          FROM audits
+          WHERE auditor_id = ${session.user.id}
+          ORDER BY created_at DESC
+        `;
 
     // Count pending submissions
     const pendingCount = result.rows.filter(
