@@ -803,7 +803,7 @@ function AuditFormContent({
                             className="w-4 h-4 text-gray-400 cursor-help hover:text-gray-600 transition-colors" 
                           />
                           <div className="absolute left-0 top-6 hidden group-hover:block z-50 w-64 p-2 bg-gray-900 text-white text-xs rounded-lg shadow-xl border border-gray-700 pointer-events-none">
-                            ADD DETAILS HERE TO HELP THE VIEWER UNDERSTAND YOUR RESPONSE.
+                            Add details here to help the viewer understand your response.
                           </div>
                         </div>
                       </div>
