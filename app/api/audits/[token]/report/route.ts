@@ -2,11 +2,10 @@
 // Used for self-service questionnaire users who are not logged in
 import { NextResponse } from 'next/server';
 import { sql } from '@vercel/postgres';
-import React from 'react';
-import { renderToBuffer } from '@react-pdf/renderer';
-import { ReportDocument } from '@/components/pdf/ReportDocument';
 import { transformAuditToReportData, formatReportDate, sanitizeAddressForFilename } from '@/lib/pdf/formatters';
 import { calculateAuditScores } from '@/lib/scoring';
+import { generatePDFFromHTML } from '@/lib/pdf/puppeteer-generator';
+import { generateComprehensiveReportHTML } from '@/components/pdf-html/ComprehensiveReportHTML';
 
 /**
  * GET /api/audits/[token]/report
@@ -89,11 +88,17 @@ export async function GET(
     // 6. Transform to report format
     const reportData = transformAuditToReportData(audit, responses, questions, scores);
 
-    // 7. Render PDF using React-PDF
-    console.log('[PDF-Public] Rendering PDF with React-PDF...');
-    const pdfBuffer = await renderToBuffer(
-      React.createElement(ReportDocument, { data: reportData }) as any
-    );
+    // 7. Generate PDF with comprehensive template
+    const reportId = `LRA-${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-${String(audit.id).padStart(6, '0')}`;
+    const html = generateComprehensiveReportHTML({
+      reportData,
+      reportId,
+      reportDate: formatReportDate(reportData.auditEndDate),
+      recommendedActions: scores.recommendedActions,
+    });
+
+    console.log('[PDF-Public] Rendering PDF with Puppeteer...');
+    const pdfBuffer = await generatePDFFromHTML(html);
     const pdfSize = Math.round(pdfBuffer.length / 1024);
     console.log(`[PDF-Public] PDF rendered (${pdfSize} KB)`);
 
