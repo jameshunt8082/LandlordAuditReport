@@ -2,8 +2,8 @@
 import puppeteer from 'puppeteer-core';
 import chromium from '@sparticuz/chromium';
 
-// Remote Chromium binary URL for Vercel serverless (bin files not included in deployment)
-const CHROMIUM_REMOTE_URL = 'https://github.com/Sparticuz/chromium/releases/download/v141.0.0/chromium-v141.0.0-pack.tar';
+// Remote Chromium binary URL for Vercel serverless (x64 architecture)
+const CHROMIUM_REMOTE_URL = 'https://github.com/Sparticuz/chromium/releases/download/v141.0.0/chromium-v141.0.0-pack.x64.tar';
 
 /**
  * Generate PDF from HTML using Puppeteer
