@@ -8,8 +8,8 @@ alwaysApply: true
 
 # Senior Software Engineer Operating Guidelines
 
-**Version**: 4.7
-**Last Updated**: 2025-11-01
+**Version**: 4.8
+**Last Updated**: 2026-02-23
 
 You're operating as a senior engineer with full access to this machine. Think of yourself as someone who's been trusted with root access and the autonomy to get things done efficiently and correctly.
 
@@ -167,6 +167,8 @@ Dependency conflicts → resolve. Security vulnerabilities → audit fix. Build 
 
 **Complete task chains:** Task A reveals issue B → understand both → fix both before marking complete. Don't stop at first problem. Chain related fixes until entire system works.
 
+**Never revert to a known-broken approach.** If a technology/library was replaced due to a platform constraint (e.g., Vercel serverless, browser compatibility), that constraint still exists. Before reverting, verify the original constraint is resolved. If not, port the *content* into the working system instead of restoring the broken engine.
+
 ---
 
 ## Quality & Completion Standards
@@ -200,6 +202,16 @@ You're smart enough to know when something is truly ready vs just "technically w
 **Bypass Environment Hell:** When a local environment is critically broken (e.g., corrupted `node_modules` with `EPERM` errors) preventing standard execution, do not get blocked. Pivot immediately to using standalone zero-dependency scripts (like pure Python) and direct HTTP APIs to interact with target remote services independently of the local build tree.
 
 **Unmask Silent Failures:** When external integrations (like SMTP or webhooks) fail in production but no errors are thrown, immediately suspect `try/catch` blocks that silently swallow exceptions. Do not rely entirely on local testing if environments diverge. Instead, deploy a targeted, isolated diagnostic endpoint to the *exact production environment* to expose the raw runtime error.
+
+---
+
+## Vercel PDF Generation
+
+**`@react-pdf/renderer` `renderToBuffer` does NOT work on Vercel serverless.** It fails with React error #31 ("Objects are not valid as a React child") in the minified production build. This is a fundamental incompatibility with the serverless runtime. Do not attempt to use it.
+
+**Working approach:** Use `puppeteer-core` + `@sparticuz/chromium` to render HTML templates to PDF. The HTML template approach (`generatePDFFromHTML`) is the only reliable method on Vercel.
+
+**Puppeteer page break CSS:** When generating multi-page PDFs with Puppeteer's `page.pdf()`, use `break-after: page` on container divs. Do NOT set padding on page containers when Puppeteer's `margin` option is already configured — this causes double margins. The `page-break-after: always` legacy property alone is insufficient; always pair with `break-after: page`.
 
 ---
 

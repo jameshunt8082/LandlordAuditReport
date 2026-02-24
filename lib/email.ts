@@ -125,22 +125,11 @@ function getReportEmailTemplate(
   propertyAddress: string
 ) {
   const textContent = `
-Hello ${clientName},
+Hi ${clientName},
 
-Thank you for completing your Landlord Risk Audit questionnaire!
+Thank you for submitting your questionnaire, your report is now ready. Please click to download.
 
-Your compliance report for ${propertyAddress} is now ready.
-
-View and download your report here: ${reportLink}
-
-This report contains your overall compliance score, risk assessment, and recommended actions to improve your property management.
-
-Please download and keep a copy for your records.
-
-If you have any questions, please contact us.
-
-Best regards,
-The Landlord Audit Team
+${reportLink}
 `.trim();
 
   const htmlContent = `
@@ -158,13 +147,9 @@ The Landlord Audit Team
   </div>
   
   <div style="background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; border: 1px solid #e0e0e0; border-top: none;">
-    <h2 style="color: #333; margin-top: 0;">Hello ${clientName},</h2>
+    <p style="font-size: 16px; margin-top: 0;">Hi ${clientName},</p>
     
-    <p>Thank you for completing your Landlord Risk Audit questionnaire!</p>
-    
-    <p><strong>Property:</strong> ${propertyAddress}</p>
-    
-    <p>Your compliance report is now ready. It contains your overall compliance score, risk assessment, and recommended actions.</p>
+    <p>Thank you for submitting your questionnaire, your report is now ready. Please click to download.</p>
     
     <div style="text-align: center; margin: 30px 0;">
       <a href="${reportLink}" 
@@ -175,21 +160,9 @@ The Landlord Audit Team
                 border-radius: 5px; 
                 font-weight: bold;
                 display: inline-block;">
-        View Your Report
+        Download Your Report
       </a>
     </div>
-    
-    <p style="font-size: 14px; color: #666;">
-      Please download and keep a copy of your report for your records.
-    </p>
-    
-    <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 20px 0;">
-    
-    <p style="font-size: 12px; color: #999; margin-bottom: 0;">
-      If you have any questions, please contact us.<br>
-      Best regards,<br>
-      <strong>The Landlord Audit Team</strong>
-    </p>
   </div>
 </body>
 </html>
