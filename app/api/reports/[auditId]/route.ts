@@ -4,10 +4,9 @@ import { auth } from '@/lib/auth';
 import { sql } from '@vercel/postgres';
 import React from 'react';
 import { renderToBuffer } from '@react-pdf/renderer';
+import { ReportDocument, generateReportFilename } from '@/components/pdf/ReportDocument';
 import { transformAuditToReportData, formatReportDate, sanitizeAddressForFilename } from '@/lib/pdf/formatters';
 import { calculateAuditScores } from '@/lib/scoring';
-import { generatePDFFromHTML } from '@/lib/pdf/puppeteer-generator';
-import { generateComprehensiveReportHTML } from '@/components/pdf-html/ComprehensiveReportHTML';
 
 /**
  * GET /api/reports/[auditId]
@@ -123,21 +122,14 @@ export async function GET(
     // 8. Generate charts in parallel
     // Charts removed from PDF (not rendering properly)
     
-      // 9. Generate PDF using Puppeteer (Vercel compatible)
-      console.log('[PDF] Step 9: Generating HTML template...');
-      const reportId = `LRA-${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-${String(auditId).padStart(6, '0')}`;
-      const html = generateComprehensiveReportHTML({
-        reportData,
-        reportId,
-        reportDate: formatReportDate(reportData.auditEndDate),
-        recommendedActions: scores.recommendedActions,
-      });
-      
-      console.log('[PDF] Step 10: Rendering PDF with Puppeteer...');
-      const pdfBuffer = await generatePDFFromHTML(html);
+      // 9. Render PDF using React-PDF
+      console.log('[PDF] Step 9: Rendering PDF with React-PDF...');
+      const pdfBuffer = await renderToBuffer(
+        React.createElement(ReportDocument, { data: reportData }) as any
+      );
       
       const pdfSize = Math.round(pdfBuffer.length / 1024);
-      console.log(`[PDF] ✓ PDF rendered successfully (${pdfSize} KB)`);
+      console.log(`[PDF] PDF rendered successfully (${pdfSize} KB)`);
     
     // 10. SKIP CACHE STORAGE FOR DEBUGGING
     console.log(`[PDF] Cache storage disabled for debugging`);
