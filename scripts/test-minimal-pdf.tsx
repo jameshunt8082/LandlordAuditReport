@@ -1,43 +1,44 @@
-import React from 'react';
-import { renderToBuffer } from '@react-pdf/renderer';
-import MinimalTestDocument from '../components/pdf/MinimalTestDocument';
+// Quick test: generate PDF using jsPDF with mock data (no DB needed)
 import fs from 'fs';
 import path from 'path';
+import { generateCompletePDF } from '../lib/pdf-client/generator';
+import { createMockReportData } from '../lib/pdf-client/mockData';
 
-async function testMinimalPDF() {
-  console.log('🧪 Testing Minimal PDF Document...\n');
-  
-  try {
-    const testData = {
-      propertyAddress: '123 Test Street',
-      landlordName: 'Test Landlord',
-      overallScore: 7.5,
-    };
-    
-    console.log('📄 Rendering minimal PDF...');
-    const startTime = Date.now();
-    
-    const pdfBuffer = await renderToBuffer(
-      React.createElement(MinimalTestDocument, testData) as any
-    );
-    
-    const renderTime = Date.now() - startTime;
-    const sizeKB = Math.round(pdfBuffer.length / 1024);
-    
-    console.log(`✅ PDF rendered in ${renderTime}ms (${sizeKB} KB)\n`);
-    
-    // Save to file
-    const outputPath = path.join(process.cwd(), 'test-minimal.pdf');
-    fs.writeFileSync(outputPath, pdfBuffer);
-    console.log(`💾 Saved to: ${outputPath}\n`);
-    
-    console.log('✅ Minimal PDF test PASSED');
-    process.exit(0);
-  } catch (error) {
-    console.error('❌ Minimal PDF test FAILED:', error);
-    process.exit(1);
-  }
+async function testPDF() {
+  console.log('Generating test PDF with mock data (no DB)...\n');
+
+  const startTime = Date.now();
+  const mockData = createMockReportData();
+
+  console.log(`Mock data created:`);
+  console.log(`  Property: ${mockData.propertyAddress}`);
+  console.log(`  Landlord: ${mockData.landlordName}`);
+  console.log(`  Score: ${mockData.overallScore}`);
+  console.log(`  Red: ${mockData.questionResponses.red.length}`);
+  console.log(`  Orange: ${mockData.questionResponses.orange.length}`);
+  console.log(`  Green: ${mockData.questionResponses.green.length}\n`);
+
+  const doc = await generateCompletePDF(mockData);
+  const pdfArrayBuffer = doc.output('arraybuffer');
+  const pdfBuffer = Buffer.from(pdfArrayBuffer);
+
+  const renderTime = Date.now() - startTime;
+  const sizeKB = Math.round(pdfBuffer.length / 1024);
+
+  const outputPath = path.join(process.cwd(), 'test-report.pdf');
+  fs.writeFileSync(outputPath, pdfBuffer);
+
+  console.log(`PDF generated in ${renderTime}ms (${sizeKB} KB)`);
+  console.log(`Saved to: ${outputPath}`);
+
+  // Open on Linux
+  const { exec } = require('child_process');
+  exec(`xdg-open "${outputPath}"`);
+
+  process.exit(0);
 }
 
-testMinimalPDF();
-
+testPDF().catch(err => {
+  console.error('ERROR:', err);
+  process.exit(1);
+});
