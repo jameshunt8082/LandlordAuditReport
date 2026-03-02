@@ -2,9 +2,7 @@
 // Used for self-service questionnaire users who are not logged in
 import { NextResponse } from 'next/server';
 import { sql } from '@vercel/postgres';
-import React from 'react';
-import { renderToBuffer } from '@react-pdf/renderer';
-import { ReportDocument } from '@/components/pdf/ReportDocument';
+import { generateCompletePDF } from '@/lib/pdf-client/generator';
 import { transformAuditToReportData, formatReportDate, sanitizeAddressForFilename } from '@/lib/pdf/formatters';
 import { calculateAuditScores } from '@/lib/scoring';
 
@@ -89,11 +87,11 @@ export async function GET(
     // 6. Transform to report format
     const reportData = transformAuditToReportData(audit, responses, questions, scores);
 
-    // 7. Render PDF using React-PDF
-    console.log('[PDF-Public] Rendering PDF with React-PDF...');
-    const pdfBuffer = await renderToBuffer(
-      React.createElement(ReportDocument, { data: reportData }) as any
-    );
+    // 7. Render PDF using jsPDF
+    console.log('[PDF-Public] Rendering PDF with jsPDF...');
+    const doc = await generateCompletePDF(reportData);
+    const pdfArrayBuffer = doc.output('arraybuffer');
+    const pdfBuffer = Buffer.from(pdfArrayBuffer);
     const pdfSize = Math.round(pdfBuffer.length / 1024);
     console.log(`[PDF-Public] PDF rendered (${pdfSize} KB)`);
 

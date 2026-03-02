@@ -2,9 +2,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { sql } from '@vercel/postgres';
-import React from 'react';
-import { renderToBuffer } from '@react-pdf/renderer';
-import { ReportDocument, generateReportFilename } from '@/components/pdf/ReportDocument';
+import { generateCompletePDF } from '@/lib/pdf-client/generator';
 import { transformAuditToReportData, formatReportDate, sanitizeAddressForFilename } from '@/lib/pdf/formatters';
 import { calculateAuditScores } from '@/lib/scoring';
 
@@ -17,7 +15,7 @@ export async function GET(
   { params }: { params: Promise<{ auditId: string }> }
 ) {
   const startTime = Date.now();
-  
+
   try {
     // 1. Auth check
     const session = await auth();
@@ -28,17 +26,17 @@ export async function GET(
         { status: 401 }
       );
     }
-    
+
     const { auditId } = await params;
     console.log(`[PDF] Generating report for audit ${auditId}...`);
-    
+
     // 2. Fetch audit from DB (admin can access all, regular auditors only their own)
     const isAdmin = session.user.role === 'admin';
-    
+
     const auditResult = isAdmin
       ? await sql`SELECT * FROM audits WHERE id = ${auditId}`
       : await sql`SELECT * FROM audits WHERE id = ${auditId} AND auditor_id = ${session.user.id}`;
-    
+
     if (auditResult.rows.length === 0) {
       console.log(`[PDF] Audit ${auditId} not found or access denied`);
       return NextResponse.json(
@@ -46,9 +44,9 @@ export async function GET(
         { status: 404 }
       );
     }
-    
+
     const audit = auditResult.rows[0] as any;
-    
+
     // Check if audit is submitted
     if (audit.status !== 'submitted' && audit.status !== 'completed') {
       console.log(`[PDF] Audit ${auditId} not submitted yet`);
@@ -57,10 +55,10 @@ export async function GET(
         { status: 400 }
       );
     }
-    
+
     // 3. SKIP CACHE TEMPORARILY FOR DEBUGGING
     console.log(`[PDF] Cache disabled for debugging - generating fresh PDF...`);
-    
+
     // 4. Fetch form responses (including comments)
     const responsesResult = await sql`
       SELECT id, audit_id, question_id, answer_value, comment, created_at
@@ -68,9 +66,9 @@ export async function GET(
       WHERE audit_id = ${auditId}
       ORDER BY question_id
     `;
-    
+
     const responses = responsesResult.rows as any[];
-    
+
     if (responses.length === 0) {
       console.log(`[PDF] No responses found for audit ${auditId}`);
       return NextResponse.json(
@@ -78,8 +76,8 @@ export async function GET(
         { status: 404 }
       );
     }
-    
-    
+
+
     // 5. Fetch questions for this tier (direct import to avoid SSRF risk)
     console.log(`[PDF] Step 5: Fetching questions for tier ${audit.risk_audit_tier}...`);
     let questions: any[] = [];
@@ -93,22 +91,22 @@ export async function GET(
       console.error('[PDF] Error fetching questions from DB:', error);
       console.error('[PDF] Error details:', (error as Error).message);
     }
-    
+
     if (questions.length === 0) {
       console.log('[PDF] No questions from DB, falling back to static questions...');
       const { getQuestionsByTier } = await import('@/lib/questions');
       questions = getQuestionsByTier(audit.risk_audit_tier);
       console.log(`[PDF] Loaded ${questions.length} static fallback questions`);
     }
-    
+
     console.log(`[PDF] ✓ Total questions loaded: ${questions.length} for tier ${audit.risk_audit_tier}`);
-    
+
     // 6. Calculate scores
     console.log(`[PDF] Step 6: Calculating scores with ${responses.length} responses and ${questions.length} questions...`);
     try {
       const scores = calculateAuditScores(responses, questions);
       console.log(`[PDF] ✓ Calculated scores: Overall ${scores.overallScore.score}, Risk Level: ${scores.overallScore.riskLevel}`);
-    
+
       // 7. Transform data to report format (comments are now in form_responses)
       console.log(`[PDF] Step 7: Transforming audit data to report format...`);
       const reportData = transformAuditToReportData(audit, responses, questions, scores);
@@ -118,53 +116,50 @@ export async function GET(
       console.log(`[PDF]   - Green questions: ${reportData.questionResponses.green.length}`);
       console.log(`[PDF]   - Recommendations: ${Object.keys(reportData.recommendationsByCategory).length} categories`);
       console.log(`[PDF]   - Subcategory scores: ${reportData.subcategoryScores.length}`);
-    
-    // 8. Generate charts in parallel
-    // Charts removed from PDF (not rendering properly)
-    
-      // 9. Render PDF using React-PDF
-      console.log('[PDF] Step 9: Rendering PDF with React-PDF...');
-      const pdfBuffer = await renderToBuffer(
-        React.createElement(ReportDocument, { data: reportData }) as any
-      );
-      
+
+      // 8. Generate charts in parallel
+      // Charts removed from PDF (not rendering properly)
+
+      // 9. Render PDF using jsPDF
+      console.log('[PDF] Step 9: Rendering PDF with jsPDF...');
+      const doc = await generateCompletePDF(reportData);
+      const pdfArrayBuffer = doc.output('arraybuffer');
+      const pdfBuffer = Buffer.from(pdfArrayBuffer);
+
       const pdfSize = Math.round(pdfBuffer.length / 1024);
       console.log(`[PDF] PDF rendered successfully (${pdfSize} KB)`);
-    
-    // 10. SKIP CACHE STORAGE FOR DEBUGGING
-    console.log(`[PDF] Cache storage disabled for debugging`);
-    
-    // 11. Generate filename
-    const sanitizedAddress = sanitizeAddressForFilename(reportData.propertyAddress);
-    const date = new Date().toISOString().split('T')[0];
-    const filename = `landlord-audit-report-${sanitizedAddress}-${date}.pdf`;
-    
-    // 12. Return PDF
-    const totalTime = Date.now() - startTime;
-    console.log(`[PDF] ✓ Report generated successfully for audit ${auditId} (${totalTime}ms, ${pdfSize} KB)`);
-    
-    return new Response(new Uint8Array(pdfBuffer), {
-      headers: {
-        'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="${filename}"`,
-        'Content-Length': pdfBuffer.length.toString(),
-        'Cache-Control': 'public, max-age=86400',
-        'X-Generation-Time': totalTime.toString(),
-      },
-    });
-    
+
+      // 10. Generate filename
+      const sanitizedAddress = sanitizeAddressForFilename(reportData.propertyAddress);
+      const date = new Date().toISOString().split('T')[0];
+      const filename = `landlord-audit-report-${sanitizedAddress}-${date}.pdf`;
+
+      // 11. Return PDF
+      const totalTime = Date.now() - startTime;
+      console.log(`[PDF] Report generated successfully for audit ${auditId} (${totalTime}ms, ${pdfSize} KB)`);
+
+      return new Response(new Uint8Array(pdfBuffer), {
+        headers: {
+          'Content-Type': 'application/pdf',
+          'Content-Disposition': `attachment; filename="${filename}"`,
+          'Content-Length': pdfBuffer.length.toString(),
+          'Cache-Control': 'public, max-age=86400',
+          'X-Generation-Time': totalTime.toString(),
+        },
+      });
+
     } catch (scoreError) {
       console.error('[PDF] ❌ Score calculation failed:', scoreError);
       throw scoreError;
     }
-    
+
   } catch (error) {
     const errorTime = Date.now() - startTime;
     console.error('[PDF] ❌ Generation error at step:', error);
     console.error('[PDF] Error name:', (error as Error).name);
     console.error('[PDF] Error message:', (error as Error).message);
     console.error('[PDF] Stack trace:', (error as Error).stack);
-    
+
     // Check if it's a specific type of error
     if ((error as Error).message.includes('options')) {
       console.error('[PDF] ⚠️  This appears to be a question options error');
@@ -172,9 +167,9 @@ export async function GET(
     if ((error as Error).message.includes('undefined')) {
       console.error('[PDF] ⚠️  This appears to be an undefined value error');
     }
-    
+
     return NextResponse.json(
-      { 
+      {
         error: 'Failed to generate PDF report',
         details: (error as Error).message,
         errorName: (error as Error).name,
