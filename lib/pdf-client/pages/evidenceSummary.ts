@@ -99,6 +99,9 @@ export async function evidenceSummary(doc: jsPDF, data: ReportData): Promise<voi
           }
         }
       },
+      didDrawPage: () => {
+        addPageFooter(doc);
+      },
       margin: { 
         left: startX,
         top: margins.top + 10,

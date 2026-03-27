@@ -2,7 +2,6 @@
 import jsPDF from 'jspdf';
 import { ReportData, QuestionResponseData } from '@/lib/pdf/formatters';
 import { COLORS, FONTS, LAYOUT, setFillColorHex, setTextColorHex, setDrawColorHex } from '../styles';
-import { addNewPageIfNeeded } from '../utils';
 import { addPageHeader } from '../components/header';
 import { addPageFooter } from '../components/footer';
 
@@ -123,7 +122,12 @@ export async function detailedResults(doc: jsPDF, data: ReportData): Promise<voi
   // Draw all questions as table rows
   allQuestions.forEach((question) => {
     // Check if we need a new page (estimate 20mm min space needed)
-    yPos = addNewPageIfNeeded(doc, yPos, 20);
+    if (yPos + 20 > LAYOUT.pageHeight - LAYOUT.margins.bottom) {
+      addPageFooter(doc);
+      doc.addPage();
+      addPageHeader(doc, doc.getCurrentPageInfo().pageNumber, 999);
+      yPos = LAYOUT.margins.top + 20;
+    }
 
     yPos = drawQuestionRow(doc, question, startX, yPos, contentWidth);
   });

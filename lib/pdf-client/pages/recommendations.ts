@@ -16,75 +16,75 @@ import { addNewPageIfNeeded } from '../utils';
 export async function recommendations(doc: jsPDF, data: ReportData): Promise<void> {
   const { margins, contentWidth } = LAYOUT;
   const startX = margins.left;
-  
+
   doc.addPage();
   addPageHeader(doc, doc.getCurrentPageInfo().pageNumber, 999);
-  
+
   let yPos = margins.top + 15;
-  
+
   // Main Title
   doc.setFontSize(FONTS.h1.size);
   doc.setFont('helvetica', FONTS.h1.style);
   setTextColorHex(doc, COLORS.black);
   doc.text('Recommended Actions', startX, yPos);
   yPos += 20;
-  
+
   // Introductory text
   doc.setFontSize(FONTS.body.size);
   doc.setFont('helvetica', 'normal');
   setTextColorHex(doc, COLORS.black);
-  
+
   // Introductory text about red/orange scores
   const intro1 = 'The following factors that were in the red or orange score zones require your attention. We have suggestions for improvements that you could action.';
   const wrapped1 = doc.splitTextToSize(intro1, contentWidth);
   doc.text(wrapped1, startX, yPos);
   yPos += wrapped1.length * 4 + 8;
-  
+
   const intro2 = 'Green scores are not shown as they reflect a higher degree of positivity associated with those factors.';
   const wrapped2 = doc.splitTextToSize(intro2, contentWidth);
   doc.text(wrapped2, startX, yPos);
   yPos += wrapped2.length * 4 + 20;
-  
+
   // Get all red and orange questions (low scoring)
   const allQuestions = [
     ...data.questionResponses.red,
     ...data.questionResponses.orange,
   ];
-  
+
   // Group questions by category
   const categories = [
-    { 
-      name: 'Documentation', 
-      questions: allQuestions.filter(q => q.category === 'Documentation') 
+    {
+      name: 'Documentation',
+      questions: allQuestions.filter(q => q.category === 'Documentation')
     },
-    { 
-      name: 'Landlord-Tenant Communication', 
-      questions: allQuestions.filter(q => q.category === 'Landlord-Tenant Communication') 
+    {
+      name: 'Landlord-Tenant Communication',
+      questions: allQuestions.filter(q => q.category === 'Landlord-Tenant Communication')
     },
-    { 
-      name: 'Evidence Gathering Systems and Procedures', 
-      questions: allQuestions.filter(q => q.category === 'Evidence Gathering Systems and Procedures') 
+    {
+      name: 'Evidence Gathering Systems and Procedures',
+      questions: allQuestions.filter(q => q.category === 'Evidence Gathering Systems and Procedures')
     },
   ];
-  
+
   // Generate one table per category
   categories.forEach((category) => {
     if (category.questions.length === 0) return;
-    
+
     // Category header
     yPos = addNewPageIfNeeded(doc, yPos, 50);
-    
+
     doc.setFontSize(FONTS.h2.size);
     doc.setFont('helvetica', FONTS.h2.style);
     setTextColorHex(doc, COLORS.blue);
     doc.text(category.name, startX, yPos);
     yPos += 12;
-    
+
     // Prepare table body with 5 columns: Status, Subcategory, Question, Reason for Low Score, Recommended Actions
     const tableBody = category.questions.map(question => {
-    const reasonText = getReasonForLowScore(question);
-    const recommendedAction = getRecommendedAction(question, data);
-      
+      const reasonText = getReasonForLowScore(question);
+      const recommendedAction = getRecommendedAction(question, data);
+
       return [
         '', // Status column - will be drawn with traffic light
         question.subcategory || '',
@@ -93,10 +93,10 @@ export async function recommendations(doc: jsPDF, data: ReportData): Promise<voi
         recommendedAction,
       ];
     });
-    
+
     // Extract colors for didDrawCell
     const rowColors = category.questions.map(q => q.color as 'red' | 'orange');
-    
+
     autoTable(doc, {
       startY: yPos,
       head: [['Status', 'Subcategory', 'Question', 'Reason for Low Score', 'Recommended Actions']],
@@ -133,17 +133,20 @@ export async function recommendations(doc: jsPDF, data: ReportData): Promise<voi
           }
         }
       },
-      margin: { 
+      didDrawPage: () => {
+        addPageFooter(doc);
+      },
+      margin: {
         left: startX,
         top: margins.top + 10,
         bottom: margins.bottom + 5,
       },
     });
-    
+
     // Update yPos after table and add spacing between categories
     yPos = (doc as any).lastAutoTable.finalY + 15;
   });
-  
+
   // If no low-scoring questions exist
   if (allQuestions.length === 0) {
     doc.setFontSize(11);
@@ -151,7 +154,7 @@ export async function recommendations(doc: jsPDF, data: ReportData): Promise<voi
     setTextColorHex(doc, COLORS.mediumGray);
     doc.text('No immediate service recommendations - compliance is generally strong.', startX, yPos);
   }
-  
+
   addPageFooter(doc);
 }
 
@@ -172,24 +175,24 @@ function getReasonForLowScore(question: QuestionResponseData): string {
     } else {
       scoreLevel = 'high';
     }
-    
+
     // Find the matching score_example
     const matchingExample = question.score_examples.find(
       ex => ex.score_level === scoreLevel
     );
-    
+
     if (matchingExample && matchingExample.reason_text && matchingExample.reason_text.trim()) {
       return matchingExample.reason_text.trim();
     }
   }
-  
+
   // Fallback: Generic reason based on score/color
   if (question.color === 'red') {
     return `Legal requirement issue identified in ${question.subcategory || question.category}.`;
   } else if (question.color === 'orange') {
     return `Improvement needed in ${question.subcategory || question.category}.`;
   }
-  
+
   return '';
 }
 
@@ -209,16 +212,16 @@ function getRecommendedAction(question: QuestionResponseData, data?: ReportData)
     } else {
       scoreLevel = 'high';
     }
-    
+
     const matchingExample = question.score_examples.find(
       ex => ex.score_level === scoreLevel
     );
-    
+
     if (matchingExample && matchingExample.report_action && matchingExample.report_action.trim()) {
       return matchingExample.report_action.trim();
     }
   }
-  
+
   // Fallback: Check suggested services (if data available)
   if (data && data.suggestedServices) {
     const service = data.suggestedServices.find(
@@ -228,14 +231,14 @@ function getRecommendedAction(question: QuestionResponseData, data?: ReportData)
       return service.suggestedService;
     }
   }
-  
+
   // Fallback 3: Generic action based on score/color
   if (question.color === 'red') {
     return `Immediately address this legal requirement issue. Professional legal consultation is strongly recommended to avoid prosecution and financial penalties.`;
   } else if (question.color === 'orange') {
     return `Take action to improve compliance in this area. Consider implementing best practices to reduce risk.`;
   }
-  
+
   return '';
 }
 

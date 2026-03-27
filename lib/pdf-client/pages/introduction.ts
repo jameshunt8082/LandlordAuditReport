@@ -84,7 +84,65 @@ export async function introduction(doc: jsPDF, data: ReportData): Promise<void> 
   const greenText = 'Well-managed areas that demonstrate good practice but would benefit from future monitoring.';
   const greenWrapped = doc.splitTextToSize(greenText, contentWidth - 15);
   doc.text(greenWrapped, startX + 15, yPos + 5);
-  
+  yPos += greenWrapped.length * 4 + 18;
+
+  // ── Overall Compliance Score Box ──
+  const tierNumber = data.riskTier.split('_')[1];
+  const tierLabel =
+    tierNumber === '0' ? 'Minimal Risk' :
+    tierNumber === '1' ? 'Low Risk' :
+    tierNumber === '2' ? 'Moderate Risk' :
+    tierNumber === '3' ? 'High Risk' : 'Severe Risk';
+
+  const compliantAreas = data.subcategoryScores.filter(s => s.color === 'green').length;
+  const nonCompliantAreas = data.subcategoryScores.filter(s => s.color === 'red').length;
+  const totalAreas = data.subcategoryScores.length;
+
+  const scoreColor =
+    data.overallScore >= 7 ? COLORS.green :
+    data.overallScore >= 4 ? COLORS.orange : COLORS.red;
+
+  const boxHeight = 52;
+  const boxY = yPos;
+
+  // Background fill (pale blue)
+  setFillColorHex(doc, COLORS.paleBlue);
+  doc.rect(startX, boxY, contentWidth, boxHeight, 'F');
+
+  // Blue border
+  doc.setDrawColor(11, 83, 148); // COLORS.blue as RGB
+  doc.setLineWidth(0.5);
+  doc.rect(startX, boxY, contentWidth, boxHeight, 'S');
+
+  // "Overall Compliance Score" label
+  doc.setFontSize(13);
+  doc.setFont('helvetica', 'bold');
+  setTextColorHex(doc, COLORS.black);
+  doc.text('Overall Compliance Score', startX + 6, boxY + 10);
+
+  // Large score number
+  doc.setFontSize(30);
+  doc.setFont('helvetica', 'bold');
+  setTextColorHex(doc, scoreColor);
+  doc.text(data.overallScore.toFixed(1), startX + 6, boxY + 26);
+
+  // Traffic light dot next to score
+  drawTrafficLight(doc, startX + 32, boxY + 21, data.overallScore >= 7 ? 'green' : data.overallScore >= 4 ? 'orange' : 'red', 4);
+
+  // Risk Classification
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'normal');
+  setTextColorHex(doc, COLORS.black);
+  doc.text(`Risk Classification:`, startX + 6, boxY + 37);
+  doc.setFont('helvetica', 'bold');
+  doc.text(`Tier ${tierNumber} - ${tierLabel}`, startX + 44, boxY + 37);
+
+  // Compliance Status
+  doc.setFont('helvetica', 'normal');
+  doc.text(`Compliance Status:`, startX + 6, boxY + 45);
+  doc.setFont('helvetica', 'bold');
+  doc.text(`${compliantAreas} of ${totalAreas} areas meet standards (${nonCompliantAreas} require immediate action)`, startX + 44, boxY + 45);
+
   addPageFooter(doc);
 }
 
