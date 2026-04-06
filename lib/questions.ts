@@ -533,7 +533,7 @@ export const questions: Question[] = [
   {
     id: "12.1",
     category: CATEGORIES.COMMUNICATION,
-    section: "Product Buying",
+    section: "Cleaning Products",
     text: "Who is responsible for purchasing cleaning products and household supplies?",
     critical: false,
     tiers: ["tier_0", "tier_1", "tier_2", "tier_3", "tier_4"],

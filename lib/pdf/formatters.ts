@@ -2,7 +2,7 @@
 import { Audit, FormResponse } from '@/types/database';
 import { Question } from '@/lib/questions';
 import { CategoryScore, OverallScore, RecommendedAction } from '@/lib/scoring';
-import { getTrafficLightColor } from './styles';
+import { getTrafficLightColor } from '../pdf-client/styles';
 
 // Report Data Interfaces
 export interface SubcategoryScore {
@@ -411,7 +411,7 @@ function generateServiceRecommendations(
     'Day-to-day Communication System': { service: 'Communication Tracking System', tier: 'Tier 2' },
     'Behaviour Reporting Procedure/System': { service: 'Dispute Management Framework', tier: 'Tier 3' },
     'Cleanliness': { service: 'HMO Management Framework', tier: 'Tier 3' },
-    'Product Buying': { service: 'HMO Management Framework', tier: 'Tier 3' },
+    'Cleaning Products': { service: 'HMO Management Framework', tier: 'Tier 3' },
     'Rotas': { service: 'HMO Management Framework', tier: 'Tier 3' },
     // Evidence Gathering
     'Room Inspections Log': { service: 'Inspection Protocol Service', tier: 'Tier 3' },

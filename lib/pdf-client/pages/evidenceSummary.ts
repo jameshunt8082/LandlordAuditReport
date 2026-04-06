@@ -20,14 +20,14 @@ export async function evidenceSummary(doc: jsPDF, data: ReportData): Promise<voi
   doc.addPage();
   addPageHeader(doc, doc.getCurrentPageInfo().pageNumber, 999);
   
-  let yPos = margins.top + 15;
+  let yPos = margins.top + 5;
   
   // Main Title
   doc.setFontSize(FONTS.h1.size);
   doc.setFont('helvetica', FONTS.h1.style);
   setTextColorHex(doc, COLORS.primaryGreen);
   doc.text('Score Summary', startX, yPos);
-  yPos += 20;
+  yPos += 8;
   
   // Group subcategories by category
   const categories = [
@@ -62,7 +62,7 @@ export async function evidenceSummary(doc: jsPDF, data: ReportData): Promise<voi
     doc.setFont('helvetica', FONTS.h2.style);
     setTextColorHex(doc, COLORS.blue);
     doc.text(category.name, startX, yPos);
-    yPos += 12;
+    yPos += 5;
     
     // Table body: Status (traffic light) first, then Subcategory name
     // Swapped columns: Status on left, Subcategory on right
@@ -83,6 +83,9 @@ export async function evidenceSummary(doc: jsPDF, data: ReportData): Promise<voi
         fontSize: 10,
         textColor: hexToRgb(COLORS.black),
       },
+      styles: {
+        cellPadding: 1.5,
+      },
       columnStyles: {
         0: { cellWidth: 40, halign: 'center' }, // Status with traffic light (now on left)
         1: { cellWidth: 130 }, // Subcategory takes most space (now on right)
@@ -95,7 +98,7 @@ export async function evidenceSummary(doc: jsPDF, data: ReportData): Promise<voi
             const color = rowColors[rowIndex] as 'red' | 'orange' | 'green';
             const cellX = cellData.cell.x + cellData.cell.width / 2;
             const cellY = cellData.cell.y + cellData.cell.height / 2;
-            drawTrafficLight(doc, cellX, cellY, color, 2);
+            drawTrafficLight(doc, cellX, cellY, color, 1.5);
           }
         }
       },
@@ -109,8 +112,8 @@ export async function evidenceSummary(doc: jsPDF, data: ReportData): Promise<voi
       },
     });
     
-    // Update yPos after table and add spacing between categories
-    yPos = (doc as any).lastAutoTable.finalY + 15;
+    // Update yPos after table and add minimal spacing between categories
+    yPos = (doc as any).lastAutoTable.finalY + 8;
   });
   
   addPageFooter(doc);

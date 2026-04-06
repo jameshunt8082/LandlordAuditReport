@@ -11,6 +11,7 @@ import { COLORS, setFillColorHex } from '../styles';
  * @param color - Traffic light color
  * @param size - Radius in mm (default: 2mm for small indicators)
  */
+
 export function drawTrafficLight(
   doc: jsPDF,
   x: number,

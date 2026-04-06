@@ -32,13 +32,16 @@ export function updatePageNumber(
 ): void {
   const { margins, pageWidth } = LAYOUT;
   
-  // Add page number (right-aligned)
-  doc.setFontSize(9);
-  setTextColorHex(doc, COLORS.mediumGray);
+  // Add page number (right-aligned) perfectly to the top right
+  doc.setFontSize(8);
+  doc.setFont('helvetica', 'normal');
+  setTextColorHex(doc, COLORS.mediumGray || '#888888');
+  
+  // Ensure perfectly flush with the right margin, raised slightly above the line
   doc.text(
-    `Page ${pageNumber} of ${totalPages}`,
+    `PAGE ${pageNumber} OF ${totalPages}`,
     pageWidth - margins.right,
-    margins.top - 8,
+    margins.top - 7.5,
     { align: 'right' }
   );
 }

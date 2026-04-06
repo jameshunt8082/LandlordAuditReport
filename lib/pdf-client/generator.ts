@@ -39,9 +39,9 @@ export async function generateCompletePDF(data: ReportData): Promise<jsPDF> {
     console.log('[PDF Generator] Generating cover page...');
     await coverPage(doc, data);
     
-    // Page 2: Introduction (moved to beginning per James feedback, removed "How to Use" section)
-    console.log('[PDF Generator] Generating introduction...');
-    await introduction(doc, data);
+    // Page 2: Introduction (Merged into Cover Page per new client design)
+    // console.log('[PDF Generator] Generating introduction...');
+    // await introduction(doc, data);
     
     // Page 3: Audit Scope (simplified - removed full methodology per James feedback)
     console.log('[PDF Generator] Generating audit scope...');

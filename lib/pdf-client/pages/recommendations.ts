@@ -35,7 +35,7 @@ export async function recommendations(doc: jsPDF, data: ReportData): Promise<voi
   setTextColorHex(doc, COLORS.black);
 
   // Introductory text about red/orange scores
-  const intro1 = 'The following factors that were in the red or orange score zones require your attention. We have suggestions for improvements that you could action.';
+  const intro1 = 'The following is a prioritised list of actions we recommend you take. Upgrading to an on-site audit includes a full inspection, advice and guidance and ensures there are no important details that you have overlooked.';
   const wrapped1 = doc.splitTextToSize(intro1, contentWidth);
   doc.text(wrapped1, startX, yPos);
   yPos += wrapped1.length * 4 + 8;
@@ -80,16 +80,13 @@ export async function recommendations(doc: jsPDF, data: ReportData): Promise<voi
     doc.text(category.name, startX, yPos);
     yPos += 12;
 
-    // Prepare table body with 5 columns: Status, Subcategory, Question, Reason for Low Score, Recommended Actions
+    // Prepare table body with 3 columns: Status, Subcategory, Recommended Actions
     const tableBody = category.questions.map(question => {
-      const reasonText = getReasonForLowScore(question);
       const recommendedAction = getRecommendedAction(question, data);
 
       return [
         '', // Status column - will be drawn with traffic light
         question.subcategory || '',
-        question.questionText || '',
-        reasonText,
         recommendedAction,
       ];
     });
@@ -99,7 +96,7 @@ export async function recommendations(doc: jsPDF, data: ReportData): Promise<voi
 
     autoTable(doc, {
       startY: yPos,
-      head: [['Status', 'Subcategory', 'Question', 'Reason for Low Score', 'Recommended Actions']],
+      head: [['Status', 'Subcategory', 'Recommended Actions']],
       body: tableBody,
       theme: 'grid',
       headStyles: {
@@ -116,10 +113,8 @@ export async function recommendations(doc: jsPDF, data: ReportData): Promise<voi
       },
       columnStyles: {
         0: { cellWidth: 15, halign: 'center' }, // Status (traffic light)
-        1: { cellWidth: 28, valign: 'top' }, // Subcategory
-        2: { cellWidth: 42, valign: 'top' }, // Question
-        3: { cellWidth: 35, valign: 'top' }, // Reason for Low Score
-        4: { cellWidth: 50, valign: 'top' }, // Recommended Actions
+        1: { cellWidth: 50, valign: 'top' }, // Subcategory
+        2: { cellWidth: 105, valign: 'top' }, // Recommended Actions
       },
       didDrawCell: (cellData) => {
         // Draw traffic lights in Status column (index 0)
@@ -128,8 +123,12 @@ export async function recommendations(doc: jsPDF, data: ReportData): Promise<voi
           if (rowIndex < rowColors.length) {
             const color = rowColors[rowIndex];
             const cellX = cellData.cell.x + cellData.cell.width / 2;
-            const cellY = cellData.cell.y + cellData.cell.height / 2;
-            drawTrafficLight(doc, cellX, cellY, color, 2);
+            
+            // Align horizontally with the first line of top-aligned text. 
+            // cellPadding is 3. The font is 9pt (~3mm). So +5mm pushes the circle perfectly into the top line of text.
+            const cellY = cellData.cell.y + 5; 
+            
+            drawTrafficLight(doc, cellX, cellY, color, 1.5);
           }
         }
       },
