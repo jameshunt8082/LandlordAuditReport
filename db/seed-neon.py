@@ -281,7 +281,7 @@ QUESTIONS = [
         ],
     },
     {
-        "id": "12.1", "cat": "Landlord-Tenant Communication", "sec": "Product Buying",
+        "id": "12.1", "cat": "Landlord-Tenant Communication", "sec": "Cleaning Products",
         "text": "Who is responsible for purchasing cleaning products and household supplies?",
         "critical": False, "weight": 1.0,
         "comment": "Covers clear communication of policies regarding who purchases cleaning products.",

@@ -1,5 +1,13 @@
 import { sql } from "@vercel/postgres";
 
+function normalizeSectionName(section: string): string {
+  if (section === "Product Buying") {
+    return "Cleaning Products";
+  }
+
+  return section;
+}
+
 /**
  * Question interface matching the format used by the scoring system
  */
@@ -79,7 +87,7 @@ export async function getQuestionsForTier(tier: string): Promise<QuestionFromDB[
   const questions: QuestionFromDB[] = result.rows.map((row) => ({
     id: row.question_number,
     category: row.category,
-    section: row.sub_category,
+    section: normalizeSectionName(row.sub_category),
     text: row.question_text,
     critical: row.is_critical,
     tiers: [tier],

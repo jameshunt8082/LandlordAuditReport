@@ -14,6 +14,25 @@ export function wrapText(
 }
 
 /**
+ * Draw wrapped paragraph text with justified alignment.
+ * Returns the wrapped lines so callers can reuse the count for spacing.
+ */
+export function drawJustifiedText(
+  doc: jsPDF,
+  text: string,
+  x: number,
+  y: number,
+  maxWidth: number
+): string[] {
+  const lines = wrapText(doc, text, maxWidth);
+  doc.text(lines, x, y, {
+    align: 'justify',
+    maxWidth,
+  });
+  return lines;
+}
+
+/**
  * Calculate height required for wrapped text
  */
 export function calculateTextHeight(
@@ -113,4 +132,3 @@ export function generateReportId(propertyAddress: string, date: Date): string {
   
   return `LRA-${year}-${month}-${addressHash}`;
 }
-

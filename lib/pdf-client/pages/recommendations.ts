@@ -6,7 +6,7 @@ import { COLORS, FONTS, LAYOUT, setTextColorHex } from '../styles';
 import { addPageHeader } from '../components/header';
 import { addPageFooter } from '../components/footer';
 import { drawTrafficLight } from '../components/trafficLight';
-import { addNewPageIfNeeded } from '../utils';
+import { addNewPageIfNeeded, drawJustifiedText } from '../utils';
 
 /**
  * Generate Recommended Actions Page
@@ -25,7 +25,7 @@ export async function recommendations(doc: jsPDF, data: ReportData): Promise<voi
   // Main Title
   doc.setFontSize(FONTS.h1.size);
   doc.setFont('helvetica', FONTS.h1.style);
-  setTextColorHex(doc, COLORS.black);
+  setTextColorHex(doc, COLORS.primaryGreen);
   doc.text('Recommended Actions', startX, yPos);
   yPos += 20;
 
@@ -36,13 +36,11 @@ export async function recommendations(doc: jsPDF, data: ReportData): Promise<voi
 
   // Introductory text about red/orange scores
   const intro1 = 'The following is a prioritised list of actions we recommend you take. Upgrading to an on-site audit includes a full inspection, advice and guidance and ensures there are no important details that you have overlooked.';
-  const wrapped1 = doc.splitTextToSize(intro1, contentWidth);
-  doc.text(wrapped1, startX, yPos);
+  const wrapped1 = drawJustifiedText(doc, intro1, startX, yPos, contentWidth);
   yPos += wrapped1.length * 4 + 8;
 
   const intro2 = 'Green scores are not shown as they reflect a higher degree of positivity associated with those factors.';
-  const wrapped2 = doc.splitTextToSize(intro2, contentWidth);
-  doc.text(wrapped2, startX, yPos);
+  const wrapped2 = drawJustifiedText(doc, intro2, startX, yPos, contentWidth);
   yPos += wrapped2.length * 4 + 20;
 
   // Get all red and orange questions (low scoring)
@@ -76,7 +74,7 @@ export async function recommendations(doc: jsPDF, data: ReportData): Promise<voi
 
     doc.setFontSize(FONTS.h2.size);
     doc.setFont('helvetica', FONTS.h2.style);
-    setTextColorHex(doc, COLORS.blue);
+    setTextColorHex(doc, COLORS.primaryGreen);
     doc.text(category.name, startX, yPos);
     yPos += 12;
 
@@ -250,4 +248,3 @@ function hexToRgb(hex: string): [number, number, number] {
     parseInt(result[3], 16),
   ];
 }
-
