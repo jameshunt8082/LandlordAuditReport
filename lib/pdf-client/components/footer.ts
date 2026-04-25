@@ -1,7 +1,8 @@
 // Page Footer Component
 import jsPDF from 'jspdf';
-import { LAYOUT, COLORS, setFillColorHex, setTextColorHex } from '../styles';
-import { BRAND_LOGO_BASE64, TRAFFIC_LIGHT_BASE64 } from './logoBase64';
+import { LAYOUT, COLORS, setFillColorHex } from '../styles';
+import { BRAND_LOGO_BASE64 } from './logoBase64';
+import { drawTrafficLightGraphic } from './trafficLight';
 
 /**
  * Add custom full-width olive page footer
@@ -24,12 +25,10 @@ export function addPageFooter(doc: jsPDF): void {
   doc.addImage(BRAND_LOGO_BASE64, 'PNG', startX, footerY + 4, logoWidth, logoHeight);
 
   // Right Side: Graphic Traffic Lights Strip Embed
-  // The provided traffic-light.png is a 512x512 square, so we MUST 
-  // lock the width and height to a 1:1 aspect ratio to avoid distortion.
-  const imageSize = 16;
-  const endX = pageWidth - 15 - imageSize;
-  const centeredY = footerY + (footerHeight - imageSize) / 2;
-  
-  doc.addImage(TRAFFIC_LIGHT_BASE64, 'PNG', endX, centeredY, imageSize, imageSize);
-}
+  const graphicHeight = 16;
+  const graphicWidth = graphicHeight * (200 / 621);
+  const endX = pageWidth - 15 - graphicWidth;
+  const centeredY = footerY + (footerHeight - graphicHeight) / 2;
 
+  drawTrafficLightGraphic(doc, endX, centeredY, graphicWidth, graphicHeight, graphicHeight * 0.04);
+}
