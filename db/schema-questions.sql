@@ -47,7 +47,9 @@ CREATE TABLE IF NOT EXISTS question_score_examples (
 -- Indexes for performance
 CREATE INDEX IF NOT EXISTS idx_question_templates_category ON question_templates(category);
 CREATE INDEX IF NOT EXISTS idx_question_templates_active ON question_templates(is_active);
-CREATE INDEX IF NOT EXISTS idx_question_templates_tiers ON question_templates USING GIN (applicable_tiers);
+-- Partial GIN index: the hot read path always filters is_active = TRUE, so inactive
+-- rows are excluded to keep the index small. Applied by db/migrate-questions-indexes.ts.
+CREATE INDEX IF NOT EXISTS idx_question_templates_tiers_active ON question_templates USING GIN (applicable_tiers) WHERE is_active = TRUE;
 CREATE INDEX IF NOT EXISTS idx_question_answer_options_template ON question_answer_options(question_template_id);
 CREATE INDEX IF NOT EXISTS idx_question_score_examples_template ON question_score_examples(question_template_id);
 
