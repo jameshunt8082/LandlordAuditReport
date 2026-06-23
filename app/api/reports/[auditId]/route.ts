@@ -80,23 +80,19 @@ export async function GET(
 
     // 5. Fetch questions for this tier (direct import to avoid SSRF risk)
     console.log(`[PDF] Step 5: Fetching questions for tier ${audit.risk_audit_tier}...`);
-    let questions: any[] = [];
-    try {
-      // SECURITY FIX: Use direct function import instead of HTTP fetch
-      // This eliminates SSRF risk and reduces latency
-      const { getQuestionsForTier } = await import('@/lib/questions-db');
-      questions = await getQuestionsForTier(audit.risk_audit_tier);
-      console.log(`[PDF] Fetched ${questions.length} questions from DB`);
-    } catch (error) {
-      console.error('[PDF] Error fetching questions from DB:', error);
-      console.error('[PDF] Error details:', (error as Error).message);
-    }
+    // SECURITY FIX: Use direct function import instead of HTTP fetch (no SSRF, lower latency).
+    // No static fallback: a report must be scored against the same question set the
+    // landlord answered. Falling back to lib/questions.ts can silently drop/add a
+    // question and produce an inconsistent document, so abort instead.
+    const { getQuestionsForTier } = await import('@/lib/questions-db');
+    const questions: any[] = await getQuestionsForTier(audit.risk_audit_tier);
+    console.log(`[PDF] Fetched ${questions.length} questions from DB`);
 
     if (questions.length === 0) {
-      console.log('[PDF] No questions from DB, falling back to static questions...');
-      const { getQuestionsByTier } = await import('@/lib/questions');
-      questions = getQuestionsByTier(audit.risk_audit_tier);
-      console.log(`[PDF] Loaded ${questions.length} static fallback questions`);
+      return NextResponse.json(
+        { error: "Question set is currently unavailable; report generation was aborted to avoid an inconsistent document." },
+        { status: 503 }
+      );
     }
 
     console.log(`[PDF] ✓ Total questions loaded: ${questions.length} for tier ${audit.risk_audit_tier}`);

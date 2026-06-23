@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Info } from "lucide-react";
 import { Audit } from "@/types/database";
-import { questions, getQuestionsByTier, groupQuestionsByCategory, Question } from "@/lib/questions";
+import { groupQuestionsByCategory, Question } from "@/lib/questions";
 
 // Create dynamic schema based on questions
 const createFormSchema = (questionsToValidate: Question[]) => {
@@ -59,11 +59,15 @@ export default function AuditFormPage() {
         );
         const questionsData = await questionsResponse.json();
 
-        if (questionsResponse.ok && questionsData.questions) {
+        if (questionsResponse.ok && questionsData.questions?.length > 0) {
           setDynamicQuestions(questionsData.questions);
         } else {
-          // Fallback to static questions if API fails
-          setDynamicQuestions(getQuestionsByTier(auditData.audit.risk_audit_tier));
+          // Do NOT silently fall back to a static question set. The static list in
+          // lib/questions.ts can diverge from the database the report is scored
+          // against (e.g. a question that exists only in the DB), so a fallback form
+          // would collect answers that the report cannot score consistently.
+          // Fail visibly and let the user retry instead.
+          setError("We couldn't load the questionnaire right now. Please refresh and try again.");
         }
       } catch (error) {
         setError("An error occurred while loading the audit");

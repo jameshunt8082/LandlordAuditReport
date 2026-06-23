@@ -64,20 +64,18 @@ export async function GET(
 
     // 4. Fetch questions for this tier
     console.log(`[PDF-Public] Fetching questions for tier ${audit.risk_audit_tier}...`);
-    let questions: any[] = [];
-    try {
-      const { getQuestionsForTier } = await import('@/lib/questions-db');
-      questions = await getQuestionsForTier(audit.risk_audit_tier);
-      console.log(`[PDF-Public] Fetched ${questions.length} questions from DB`);
-    } catch (error) {
-      console.error('[PDF-Public] Error fetching questions from DB:', error);
-    }
+    // No static fallback: a report must be scored against the same question set the
+    // landlord answered. Falling back to lib/questions.ts can silently diverge from
+    // the DB and produce an inconsistent document, so abort instead.
+    const { getQuestionsForTier } = await import('@/lib/questions-db');
+    const questions: any[] = await getQuestionsForTier(audit.risk_audit_tier);
+    console.log(`[PDF-Public] Fetched ${questions.length} questions from DB`);
 
     if (questions.length === 0) {
-      console.log('[PDF-Public] Falling back to static questions...');
-      const { getQuestionsByTier } = await import('@/lib/questions');
-      questions = getQuestionsByTier(audit.risk_audit_tier);
-      console.log(`[PDF-Public] Loaded ${questions.length} static fallback questions`);
+      return NextResponse.json(
+        { error: "Question set is currently unavailable; report generation was aborted to avoid an inconsistent document." },
+        { status: 503 }
+      );
     }
 
     // 5. Calculate scores
