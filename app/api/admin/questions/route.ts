@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { sql } from "@vercel/postgres";
+import { sql, db } from "@vercel/postgres";
 import { z } from "zod";
 
 const createQuestionSchema = z.object({
@@ -208,89 +208,73 @@ export async function POST(request: Request) {
     // Insert question template
     console.log('📝 Inserting question template...');
     console.log('   applicable_tiers:', data.applicable_tiers);
-    const templateResult = await sql`
-      INSERT INTO question_templates (
-        category,
-        sub_category,
-        question_number,
-        question_text,
-        question_type,
-        applicable_tiers,
-        weight,
-        is_critical,
-        comment,
-        motivation_learning_point,
-        created_by_auditor_id
-      ) VALUES (
-        ${data.category},
-        ${data.sub_category},
-        ${questionNumber},
-        ${data.question_text},
-        ${data.question_type},
-        ${JSON.stringify(data.applicable_tiers)},
-        ${data.weight},
-        ${data.is_critical},
-        ${data.comment || null},
-        ${data.motivation_learning_point || null},
-        ${session.user.id}
-      )
-      RETURNING *
-    `;
-    console.log('✅ Template inserted, ID:', templateResult.rows[0].id);
+    // Atomic: the template row and all of its answer options / score examples must be
+    // created together. Without a transaction a mid-loop failure would leave a template
+    // with no (or partial) child rows.
+    const client = await db.connect();
+    let template: any;
+    try {
+      await client.query("BEGIN");
 
-    const template = templateResult.rows[0];
+      const templateResult = await client.query(
+        `INSERT INTO question_templates (
+          category, sub_category, question_number, question_text, question_type,
+          applicable_tiers, weight, is_critical, comment, motivation_learning_point,
+          created_by_auditor_id
+        ) VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7, $8, $9, $10, $11)
+        RETURNING *`,
+        [
+          data.category,
+          data.sub_category,
+          questionNumber,
+          data.question_text,
+          data.question_type,
+          JSON.stringify(data.applicable_tiers),
+          data.weight,
+          data.is_critical,
+          data.comment || null,
+          data.motivation_learning_point || null,
+          session.user.id,
+        ]
+      );
+      template = templateResult.rows[0];
+      console.log('✅ Template inserted, ID:', template.id);
 
-    // Insert answer options
-    console.log('📋 Inserting answer options...');
-    for (let i = 0; i < data.answer_options.length; i++) {
-      const option = data.answer_options[i];
-      console.log(`   Option ${i + 1}:`, {
-        text: option.option_text.substring(0, 50) + '...',
-        score: option.score_value,
-        order: i + 1  // Start from 1, not 0
-      });
-      
-      await sql`
-        INSERT INTO question_answer_options (
-          question_template_id,
-          option_text,
-          score_value,
-          option_order,
-          is_example
-        ) VALUES (
-          ${template.id},
-          ${option.option_text},
-          ${option.score_value},
-          ${i + 1},
-          ${option.is_example || false}
-        )
-      `;
-    }
-    console.log('✅ All answer options inserted');
-
-    // Insert score examples
-    console.log('📊 Inserting score examples...');
-    if (data.score_examples && data.score_examples.length > 0) {
-      for (const example of data.score_examples) {
-        console.log(`   Example (${example.score_level}):`, example.reason_text.substring(0, 50) + '...');
-        
-        await sql`
-          INSERT INTO question_score_examples (
-            question_template_id,
-            score_level,
-            reason_text,
-            report_action
-          ) VALUES (
-            ${template.id},
-            ${example.score_level},
-            ${example.reason_text},
-            ${example.report_action || null}
-          )
-        `;
+      // Insert answer options
+      console.log('📋 Inserting answer options...');
+      for (let i = 0; i < data.answer_options.length; i++) {
+        const option = data.answer_options[i];
+        await client.query(
+          `INSERT INTO question_answer_options
+             (question_template_id, option_text, score_value, option_order, is_example)
+           VALUES ($1, $2, $3, $4, $5)`,
+          [template.id, option.option_text, option.score_value, i + 1, option.is_example || false]
+        );
       }
-      console.log('✅ All score examples inserted');
-    } else {
-      console.log('⚠️  No score examples provided');
+      console.log('✅ All answer options inserted');
+
+      // Insert score examples
+      console.log('📊 Inserting score examples...');
+      if (data.score_examples && data.score_examples.length > 0) {
+        for (const example of data.score_examples) {
+          await client.query(
+            `INSERT INTO question_score_examples
+               (question_template_id, score_level, reason_text, report_action)
+             VALUES ($1, $2, $3, $4)`,
+            [template.id, example.score_level, example.reason_text, example.report_action || null]
+          );
+        }
+        console.log('✅ All score examples inserted');
+      } else {
+        console.log('⚠️  No score examples provided');
+      }
+
+      await client.query("COMMIT");
+    } catch (txError) {
+      await client.query("ROLLBACK");
+      throw txError;
+    } finally {
+      client.release();
     }
 
     console.log('🎉 Question created successfully!');
