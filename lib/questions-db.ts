@@ -1,4 +1,5 @@
 import { sql } from "@vercel/postgres";
+import { sortByQuestionNumber } from "@/lib/question-sort";
 
 function normalizeSectionName(section: string): string {
   if (section === "Product Buying") {
@@ -98,5 +99,10 @@ export async function getQuestionsForTier(tier: string): Promise<QuestionFromDB[
     score_examples: row.score_examples || [],
   }));
 
-  return questions;
+  // question_number is VARCHAR, so the SQL ORDER BY is lexicographic ("10.1"
+  // before "2.1"). Re-sort numerically so the order is correct as categories grow.
+  return sortByQuestionNumber(questions, {
+    category: (q) => q.category,
+    number: (q) => q.id,
+  });
 }

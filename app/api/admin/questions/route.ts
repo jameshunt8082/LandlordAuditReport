@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { sql, db } from "@vercel/postgres";
 import { z } from "zod";
+import { buildAdminQuestionsListQuery } from "@/lib/admin-questions-query";
+import { sortByQuestionNumber } from "@/lib/question-sort";
+import { questionNumberLockArg, nextMinorNumber } from "@/lib/question-number";
 
 const createQuestionSchema = z.object({
   category: z.string().min(1, "Category is required"),
@@ -47,94 +50,22 @@ export async function GET(request: Request) {
     const tier = searchParams.get("tier");
     const activeOnly = searchParams.get("active") !== "false";
 
-    // Optimized query using subqueries to avoid Cartesian product
-    // Previously caused 9 duplicates (3 options × 3 examples = 9)
-    let result;
-    
-    if (category && category !== "all") {
-      result = await sql`
-        SELECT 
-          qt.*,
-          COALESCE(
-            (
-              SELECT json_agg(
-                jsonb_build_object(
-                  'id', qao.id,
-                  'option_text', qao.option_text,
-                  'score_value', qao.score_value,
-                  'option_order', qao.option_order,
-                  'is_example', qao.is_example
-                ) ORDER BY qao.option_order
-              )
-              FROM question_answer_options qao
-              WHERE qao.question_template_id = qt.id
-            ),
-            '[]'
-          ) as answer_options,
-          COALESCE(
-            (
-              SELECT json_agg(
-                jsonb_build_object(
-                  'id', qse.id,
-                  'score_level', qse.score_level,
-                  'reason_text', qse.reason_text,
-                  'report_action', qse.report_action
-                )
-              )
-              FROM question_score_examples qse
-              WHERE qse.question_template_id = qt.id
-            ),
-            '[]'
-          ) as score_examples
-        FROM question_templates qt
-        WHERE qt.is_active = TRUE
-          AND qt.category = ${category}
-        ORDER BY qt.category, qt.question_number
-      `;
-    } else {
-      result = await sql`
-        SELECT 
-          qt.*,
-          COALESCE(
-            (
-              SELECT json_agg(
-                jsonb_build_object(
-                  'id', qao.id,
-                  'option_text', qao.option_text,
-                  'score_value', qao.score_value,
-                  'option_order', qao.option_order,
-                  'is_example', qao.is_example
-                ) ORDER BY qao.option_order
-              )
-              FROM question_answer_options qao
-              WHERE qao.question_template_id = qt.id
-            ),
-            '[]'
-          ) as answer_options,
-          COALESCE(
-            (
-              SELECT json_agg(
-                jsonb_build_object(
-                  'id', qse.id,
-                  'score_level', qse.score_level,
-                  'reason_text', qse.reason_text,
-                  'report_action', qse.report_action
-                )
-              )
-              FROM question_score_examples qse
-              WHERE qse.question_template_id = qt.id
-            ),
-            '[]'
-          ) as score_examples
-        FROM question_templates qt
-        WHERE qt.is_active = TRUE
-        ORDER BY qt.category, qt.question_number
-      `;
-    }
+    // Build the list query from the actual filters. The `active` and `tier` params
+    // were previously parsed but never applied. Uses parameterized subqueries to avoid
+    // the Cartesian product that previously duplicated rows (3 options × 3 examples = 9).
+    const { text, params } = buildAdminQuestionsListQuery({ category, tier, activeOnly });
+    const result = await sql.query(text, params);
+
+    // question_number is VARCHAR, so the SQL ORDER BY is lexicographic ("10.1" before
+    // "2.1"). Re-sort numerically for a stable, correct order in the admin UI.
+    const questions = sortByQuestionNumber(result.rows, {
+      category: (q: any) => q.category,
+      number: (q: any) => q.question_number,
+    });
 
     return NextResponse.json({
-      questions: result.rows,
-      total: result.rows.length,
+      questions,
+      total: questions.length,
     });
   } catch (error: any) {
     console.error("Get questions error:", error);
@@ -164,9 +95,6 @@ export async function POST(request: Request) {
     console.log('✅ Session validated:', session.user.id);
 
     const body = await request.json();
-    console.log('📦 Request body:', JSON.stringify(body, null, 2));
-    
-    console.log('🔍 Validating with Zod schema...');
     const data = createQuestionSchema.parse(body);
     console.log('✅ Zod validation passed');
     console.log('   Category:', data.category);
@@ -174,47 +102,48 @@ export async function POST(request: Request) {
     console.log('   Answer options count:', data.answer_options.length);
     console.log('   Score examples count:', data.score_examples?.length || 0);
 
-    // Auto-generate question number
-    console.log('🔢 Generating question number...');
-    const existingResult = await sql`
-      SELECT question_number FROM question_templates
-      WHERE category = ${data.category} AND sub_category = ${data.sub_category}
-      ORDER BY question_number DESC
-      LIMIT 1
-    `;
-    console.log('   Existing questions in sub-category:', existingResult.rows.length);
-
-    let questionNumber: string;
-    if (existingResult.rows.length === 0) {
-      console.log('   First question in this sub-category');
-      // First question in this sub-category
-      const categoryCount = await sql`
-        SELECT COUNT(DISTINCT sub_category) as count
-        FROM question_templates
-        WHERE category = ${data.category}
-      `;
-      const majorNumber = (categoryCount.rows[0].count || 0) + 1;
-      questionNumber = `${majorNumber}.1`;
-      console.log('   Generated number:', questionNumber);
-    } else {
-      const lastNumber = existingResult.rows[0].question_number;
-      console.log('   Last number in sub-category:', lastNumber);
-      const parts = lastNumber.split('.');
-      const nextMinor = parseInt(parts[1] || '0') + 1;
-      questionNumber = `${parts[0]}.${nextMinor}`;
-      console.log('   Generated number:', questionNumber);
-    }
-
-    // Insert question template
-    console.log('📝 Inserting question template...');
-    console.log('   applicable_tiers:', data.applicable_tiers);
-    // Atomic: the template row and all of its answer options / score examples must be
-    // created together. Without a transaction a mid-loop failure would leave a template
-    // with no (or partial) child rows.
+    // Everything below runs in one transaction. A transaction-scoped advisory lock
+    // keyed on (category, sub_category) serializes concurrent inserts so the
+    // read-generate-insert of question_number cannot race two requests into the same
+    // number (which would violate UNIQUE(category, question_number) and 500). The lock
+    // and the multi-table write are released/committed atomically.
+    console.log('🔢 Generating question number (under advisory lock)...');
     const client = await db.connect();
     let template: any;
     try {
       await client.query("BEGIN");
+      await client.query("SELECT pg_advisory_xact_lock(hashtext($1))", [
+        questionNumberLockArg(data.category, data.sub_category),
+      ]);
+
+      // Fetch all numbers for the sub-category (no SQL ORDER BY: question_number is
+      // VARCHAR so a SQL sort is lexicographic — "2.9" would outrank "2.10" and we'd
+      // regenerate an existing number). Pick the numeric max in JS instead.
+      const existingResult = await client.query(
+        `SELECT question_number FROM question_templates
+         WHERE category = $1 AND sub_category = $2`,
+        [data.category, data.sub_category]
+      );
+
+      let questionNumber: string;
+      if (existingResult.rows.length === 0) {
+        // First question in a new sub-category. NOTE: two concurrent POSTs creating
+        // two *different* new sub-categories in the same category are not serialized
+        // (different lock keys) and could compute the same major number; the UNIQUE
+        // constraint catches that and one request 500s. Rare admin op, acceptable.
+        const categoryCount = await client.query(
+          `SELECT COUNT(DISTINCT sub_category) as count
+           FROM question_templates WHERE category = $1`,
+          [data.category]
+        );
+        const majorNumber = (Number(categoryCount.rows[0].count) || 0) + 1;
+        questionNumber = `${majorNumber}.1`;
+      } else {
+        questionNumber = nextMinorNumber(
+          existingResult.rows.map((r: any) => r.question_number as string)
+        );
+      }
+      console.log('   Generated number:', questionNumber);
 
       const templateResult = await client.query(
         `INSERT INTO question_templates (
@@ -240,8 +169,6 @@ export async function POST(request: Request) {
       template = templateResult.rows[0];
       console.log('✅ Template inserted, ID:', template.id);
 
-      // Insert answer options
-      console.log('📋 Inserting answer options...');
       for (let i = 0; i < data.answer_options.length; i++) {
         const option = data.answer_options[i];
         await client.query(
@@ -251,10 +178,7 @@ export async function POST(request: Request) {
           [template.id, option.option_text, option.score_value, i + 1, option.is_example || false]
         );
       }
-      console.log('✅ All answer options inserted');
 
-      // Insert score examples
-      console.log('📊 Inserting score examples...');
       if (data.score_examples && data.score_examples.length > 0) {
         for (const example of data.score_examples) {
           await client.query(
@@ -264,12 +188,10 @@ export async function POST(request: Request) {
             [template.id, example.score_level, example.reason_text, example.report_action || null]
           );
         }
-        console.log('✅ All score examples inserted');
-      } else {
-        console.log('⚠️  No score examples provided');
       }
 
       await client.query("COMMIT");
+      console.log('✅ Question committed');
     } catch (txError) {
       await client.query("ROLLBACK");
       throw txError;
@@ -283,10 +205,7 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         message: "Question created successfully",
-        question: {
-          ...template,
-          question_number: questionNumber,
-        },
+        question: template, // RETURNING * already includes the generated question_number
       },
       { status: 201 }
     );

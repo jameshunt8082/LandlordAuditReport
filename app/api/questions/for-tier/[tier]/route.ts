@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { sql } from "@vercel/postgres";
+import { toPublicQuestion } from "@/lib/public-question";
+import { sortByQuestionNumber } from "@/lib/question-sort";
 
 // GET - Get all active questions for a specific tier (public endpoint)
 export async function GET(
@@ -29,7 +31,6 @@ export async function GET(
         qt.question_number,
         qt.question_text,
         qt.question_type,
-        qt.weight,
         qt.is_critical,
         qt.motivation_learning_point,
         qt.comment,
@@ -43,18 +44,9 @@ export async function GET(
           FROM question_answer_options qao2
           WHERE qao2.question_template_id = qt.id
             AND qao2.is_example = FALSE
-        ) as options,
-        (
-          SELECT json_agg(
-            jsonb_build_object(
-              'score_level', qse2.score_level,
-              'reason_text', qse2.reason_text,
-              'report_action', qse2.report_action
-            ) ORDER BY qse2.score_level
-          )
-          FROM question_score_examples qse2
-          WHERE qse2.question_template_id = qt.id
-        ) as score_examples
+        ) as options
+        -- weight and score_examples are intentionally NOT selected: this is a public,
+        -- unauthenticated endpoint and those fields are internal scoring guidance.
       FROM question_templates qt
       WHERE qt.is_active = TRUE
         AND qt.applicable_tiers @> ${JSON.stringify([tier])}::jsonb
@@ -62,28 +54,19 @@ export async function GET(
     `;
 
     console.log('   Found', result.rows.length, 'questions');
-    
+
     // Log each question with its option count
     result.rows.forEach(row => {
       const optionCount = row.options ? row.options.length : 0;
-      const scoreExamplesCount = row.score_examples ? row.score_examples.length : 0;
-      console.log(`   Q${row.question_number}: ${optionCount} options, ${scoreExamplesCount} score_examples`);
+      console.log(`   Q${row.question_number}: ${optionCount} options`);
     });
 
-    // Transform to match the Question interface from lib/questions.ts
-    const questions = result.rows.map((row) => ({
-      id: row.question_number,
-      category: row.category,
-      section: row.sub_category,
-      text: row.question_text,
-      critical: row.is_critical,
-      tiers: [tier],
-      weight: parseFloat(row.weight),
-      options: row.options || [],
-      motivation_learning_point: row.motivation_learning_point,
-      comment: row.comment,
-      score_examples: row.score_examples || [],
-    }));
+    // Map to the public shape (omits internal scoring fields) and sort numerically,
+    // since the SQL ORDER BY on the VARCHAR question_number is only lexicographic.
+    const questions = sortByQuestionNumber(
+      result.rows.map((row) => toPublicQuestion(row, tier)),
+      { category: (q) => q.category, number: (q) => q.id }
+    );
 
     console.log('✅ Returning', questions.length, 'questions\n');
     return NextResponse.json({ questions });
