@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { sql } from "@vercel/postgres";
+import { sql, db } from "@vercel/postgres";
 import { z } from "zod";
 
 const updateQuestionSchema = z.object({
@@ -180,67 +180,86 @@ export async function PATCH(
 
     updates.push(`updated_at = NOW()`);
 
-    if (updates.length === 1) { // Only updated_at
+    const hasScalarUpdate = updates.length > 1; // more than just updated_at
+    const hasChildUpdate =
+      data.answer_options !== undefined || data.score_examples !== undefined;
+
+    if (!hasScalarUpdate && !hasChildUpdate) {
       return NextResponse.json({ error: "No fields to update" }, { status: 400 });
     }
 
-    values.push(id);
-    const query = `
-      UPDATE question_templates
-      SET ${updates.join(', ')}
-      WHERE id = $${paramCount}
-      RETURNING *
-    `;
+    // Atomic: the template update and the full replacement of its answer options /
+    // score examples must succeed or fail together. Without a transaction a mid-loop
+    // failure would leave the question with deleted-but-not-reinserted child rows.
+    const client = await db.connect();
+    try {
+      await client.query("BEGIN");
 
-    const result = await sql.query(query, values);
-
-    if (result.rows.length === 0) {
-      return NextResponse.json(
-        { error: "Question not found" },
-        { status: 404 }
-      );
-    }
-
-    // Update answer_options if provided
-    if (body.answer_options && Array.isArray(body.answer_options)) {
-      // Delete existing options
-      await sql`DELETE FROM question_answer_options WHERE question_template_id = ${id}`;
-      
-      // Insert new options
-      for (let i = 0; i < body.answer_options.length; i++) {
-        const option = body.answer_options[i];
-        await sql`
-          INSERT INTO question_answer_options (
-            question_template_id, option_text, score_value, option_order, is_example
-          ) VALUES (
-            ${id}, 
-            ${option.option_text}, 
-            ${option.score_value}, 
-            ${i + 1}, 
-            ${option.is_example || false}
-          )
+      if (hasScalarUpdate) {
+        values.push(id);
+        const query = `
+          UPDATE question_templates
+          SET ${updates.join(', ')}
+          WHERE id = $${paramCount}
+          RETURNING id
         `;
+        const result = await client.query(query, values);
+        if (result.rows.length === 0) {
+          await client.query("ROLLBACK");
+          return NextResponse.json({ error: "Question not found" }, { status: 404 });
+        }
+      } else {
+        // No scalar fields changed, but ensure the question exists before touching children.
+        const exists = await client.query(
+          "SELECT 1 FROM question_templates WHERE id = $1",
+          [id]
+        );
+        if (exists.rows.length === 0) {
+          await client.query("ROLLBACK");
+          return NextResponse.json({ error: "Question not found" }, { status: 404 });
+        }
       }
-    }
 
-    // Update score_examples if provided
-    if (body.score_examples && Array.isArray(body.score_examples)) {
-      // Delete existing examples
-      await sql`DELETE FROM question_score_examples WHERE question_template_id = ${id}`;
-      
-      // Insert new examples
-      for (const example of body.score_examples) {
-        await sql`
-          INSERT INTO question_score_examples (
-            question_template_id, score_level, reason_text, report_action
-          ) VALUES (
-            ${id}, 
-            ${example.score_level}, 
-            ${example.reason_text}, 
-            ${example.report_action || ''}
-          )
-        `;
+      // Replace answer options. Read from the Zod-validated `data`, not the raw `body`,
+      // so score_value / is_example constraints are enforced before they hit the DB.
+      if (data.answer_options !== undefined) {
+        await client.query(
+          "DELETE FROM question_answer_options WHERE question_template_id = $1",
+          [id]
+        );
+        for (let i = 0; i < data.answer_options.length; i++) {
+          const option = data.answer_options[i];
+          await client.query(
+            `INSERT INTO question_answer_options
+               (question_template_id, option_text, score_value, option_order, is_example)
+             VALUES ($1, $2, $3, $4, $5)`,
+            [id, option.option_text, option.score_value, i + 1, option.is_example || false]
+          );
+        }
       }
+
+      // Replace score examples (also from validated `data`).
+      if (data.score_examples !== undefined) {
+        await client.query(
+          "DELETE FROM question_score_examples WHERE question_template_id = $1",
+          [id]
+        );
+        for (const example of data.score_examples) {
+          await client.query(
+            `INSERT INTO question_score_examples
+               (question_template_id, score_level, reason_text, report_action)
+             VALUES ($1, $2, $3, $4)`,
+            [id, example.score_level, example.reason_text, example.report_action || '']
+          );
+        }
+      }
+
+      await client.query("COMMIT");
+    } catch (txError) {
+      await client.query("ROLLBACK");
+      throw txError;
+    } finally {
+      client.release();
     }
 
     // Fetch complete updated question with relations
