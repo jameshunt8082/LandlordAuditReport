@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { sql } from "@vercel/postgres";
 import { calculateAuditScores } from "@/lib/scoring";
-import { getQuestionsByTier } from "@/lib/questions";
 
 // Get audit details with responses and scores
 export async function GET(
@@ -46,16 +45,17 @@ export async function GET(
 
     const responses = responsesResult.rows as any[];
 
-    // Fetch questions for this tier (direct import to avoid SSRF risk)
-    let questionsForScoring: any[];
-    try {
-      // SECURITY FIX: Use direct function import instead of HTTP fetch
-      const { getQuestionsForTier } = await import('@/lib/questions-db');
-      questionsForScoring = await getQuestionsForTier(audit.risk_audit_tier);
-    } catch (error: any) {
-      console.warn("Error fetching questions from DB, using fallback:", error?.message);
-      // Fallback to static questions
-      questionsForScoring = getQuestionsByTier(audit.risk_audit_tier);
+    // Fetch questions for this tier (direct import to avoid SSRF risk).
+    // No static fallback: scoring against a question set that differs from the one
+    // the landlord actually answered would produce a silently incorrect audit. If the
+    // DB read throws, it propagates to the outer catch (-> 500); an empty set aborts.
+    const { getQuestionsForTier } = await import('@/lib/questions-db');
+    const questionsForScoring: any[] = await getQuestionsForTier(audit.risk_audit_tier);
+    if (questionsForScoring.length === 0) {
+      return NextResponse.json(
+        { error: "Question set is currently unavailable; scoring was aborted to avoid an inconsistent result." },
+        { status: 503 }
+      );
     }
 
     // Calculate scores if responses exist
